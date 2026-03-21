@@ -116,7 +116,7 @@ function NotificacionesBell({uId,onVerReq}){
         <div style={{position:"fixed",inset:0,zIndex:48}} onClick={()=>setOpen(false)}/>
         <div style={{position:"absolute",top:"calc(100% + 8px)",right:0,width:320,background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",boxShadow:"0 8px 30px rgba(0,0,0,.15)",zIndex:49,overflow:"hidden"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderBottom:"1px solid #f0f4f8"}}>
-            <span style={{fontWeight:700,fontSize:13,color:"#1a2f4a"}}>Notificaciones{noLeidas>0?:""}</span>
+            <span style={{fontWeight:700,fontSize:13,color:"#1a2f4a"}}>Notificaciones{noLeidas>0?" ("+noLeidas+")":""}</span>
             {noLeidas>0&&<button onClick={leerTodas} style={{fontSize:10,color:"#6c5ce7",border:"none",background:"none",cursor:"pointer",fontWeight:700}}>Marcar todas leidas</button>}
           </div>
           <div style={{maxHeight:340,overflowY:"auto"}}>
