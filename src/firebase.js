@@ -1,12 +1,17 @@
-import { initializeApp } from "firebase/app"; 
-import { getFirestore } from "firebase/firestore"; 
-const firebaseConfig = { 
-  apiKey: "AIzaSyBvmoQCRXIersxf8baH_iruhL6ocsPbY6Q", 
-  authDomain: "vega-evidencias.firebaseapp.com", 
-  projectId: "vega-evidencias", 
-  storageBucket: "vega-evidencias.firebasestorage.app", 
-  messagingSenderId: "644406896319", 
-  appId: "1:644406896319:web:9b5678c2231744b9b2480a" 
-}; 
-const app = initializeApp(firebaseConfig); 
-export const db = getFirestore(app);
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyANFjMRfZ9mwXpBm637H4E3AaYGf_MCtI8",
+  authDomain: "vega-desing-tracker.firebaseapp.com",
+  projectId: "vega-desing-tracker",
+  storageBucket: "vega-desing-tracker.firebasestorage.app",
+  messagingSenderId: "176230006788",
+  appId: "1:176230006788:web:58de52ed6e1c56fc037551"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
