@@ -518,7 +518,7 @@ export default function TradeApp() {
 
   /* ── Guardar actividad ── */
   const guardarSolicitud=async()=>{
-    if(!brief.titulo||!brief.tipo||(!isViewer&&!brief.fechaEntrega)){showToast("⚠ Completa título y tipo");return;}
+    if(!brief.titulo||!brief.tipo||(!isViewer&&!brief.fechaEntrega)){showToast("⚠ Completa título y tipo");return null;}
     const id=briefEdit||"ACT-"+Date.now();
     const now2=new Date().toISOString();
     const existing=solicitudes.find(s=>s.id===briefEdit);
@@ -545,13 +545,13 @@ export default function TradeApp() {
 
     if(!briefEdit) {
       if(data.notificarA && data.notificarA.length>0) {
-        // CASO VISOR: seleccionó destinatarios Trade → email directo
+        // CASO VISOR: retornar datos de email para que el botón los abra directo
         const destinatarios = tradeUsers.filter(u=>data.notificarA.includes(u.id) && u.email);
         if(destinatarios.length>0) {
           const emails = destinatarios.map(u=>u.email);
           const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
           const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app?logout=1";
-          setTimeout(()=>abrirEmail(emails, asunto, cuerpo), 500);
+          return {tipo:"email", emails, asunto, cuerpo};
         }
       } else if(data.responableId) {
         // CASO ADMIN con diseñador asignado → panel notificación
@@ -567,6 +567,7 @@ export default function TradeApp() {
 
     showToast(briefEdit?"✏️ Actividad actualizada":"✅ Actividad creada");
     setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());
+    return null;
   };
 
   /* ── Acciones de estado ── */
@@ -1408,7 +1409,12 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,isViewer,edi
       </div>
       <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
         {onCancel&&<button onClick={onCancel} style={{padding:"12px 20px",borderRadius:11,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:13,fontWeight:700}}>Cancelar</button>}
-        <button onClick={guardarSolicitud} style={{...S.btn("#6c5ce7"),padding:"12px 28px",fontSize:13}}>{editMode?"Guardar cambios":"Crear actividad →"}</button>
+        <button onClick={async()=>{
+          const emailData = await guardarSolicitud();
+          if(emailData&&emailData.tipo==="email"){
+            abrirEmail(emailData.emails,emailData.asunto,emailData.cuerpo);
+          }
+        }} style={{...S.btn("#6c5ce7"),padding:"12px 28px",fontSize:13}}>{editMode?"Guardar cambios":"Crear actividad →"}</button>
       </div>
     </div>
   );
