@@ -573,19 +573,19 @@ function LoginScreen({onLogin,loginError,loginLoading}){
               style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
               onMouseEnter={e=>{e.currentTarget.style.background="#f0edff";e.currentTarget.style.borderColor="#6c5ce7";}}
               onMouseLeave={e=>{e.currentTarget.style.background="#f8fafc";e.currentTarget.style.borderColor="#c8d8e8";}}>
-              <div style={{width:56,height:56,borderRadius:14,background:"#E8ECF0",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
-                  <rect x="5" y="52" width="90" height="42" rx="10" fill="#F5C842"/>
-                  <rect x="14" y="46" width="72" height="48" rx="8" fill="#FFD966"/>
-                  <rect x="38" y="60" width="18" height="28" rx="4" fill="#1A5276"/>
-                  <rect x="20" y="8" width="11" height="48" rx="5.5" fill="#48C9B0"/>
-                  <rect x="17" y="5" width="17" height="9" rx="4" fill="#1ABC9C"/>
-                  <rect x="37" y="5" width="9" height="46" rx="4.5" fill="#F1948A"/>
-                  <ellipse cx="41" cy="4" rx="6" ry="4" fill="#E74C3C"/>
-                  <rect x="56" y="14" width="9" height="42" rx="4.5" fill="#BDC3C7"/>
-                  <rect x="54" y="10" width="13" height="7" rx="3" fill="#E67E22"/>
-                  <rect x="57" y="30" width="7" height="3" rx="1.5" fill="#E67E22"/>
-                  <rect x="57" y="38" width="7" height="3" rx="1.5" fill="#E67E22"/>
+              <div style={{width:56,height:56,borderRadius:14,background:"#F0F4F8",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="46" height="46">
+                  <circle cx="50" cy="50" r="36" fill="none" stroke="#E0E0E0" strokeWidth="20"/>
+                  <path d="M50 14 A36 36 0 0 1 86 50" fill="none" stroke="#81C784" strokeWidth="20"/>
+                  <path d="M86 50 A36 36 0 0 1 68 82" fill="none" stroke="#FFB74D" strokeWidth="20"/>
+                  <path d="M68 82 A36 36 0 0 1 32 82" fill="none" stroke="#F06292" strokeWidth="20"/>
+                  <path d="M32 82 A36 36 0 0 1 14 50" fill="none" stroke="#64B5F6" strokeWidth="20"/>
+                  <path d="M14 50 A36 36 0 0 1 50 14" fill="none" stroke="#AED581" strokeWidth="20"/>
+                  <circle cx="50" cy="50" r="18" fill="white"/>
+                  <line x1="30" y1="75" x2="62" y2="30" stroke="#1565C0" strokeWidth="6" strokeLinecap="round"/>
+                  <polygon points="62,22 70,38 54,38" fill="#1565C0"/>
+                  <polygon points="26,80 32,70 36,78" fill="#FFC107"/>
+                  <circle cx="28" cy="82" r="4" fill="#FF8F00"/>
                 </svg>
               </div>
               <div>
@@ -599,19 +599,21 @@ function LoginScreen({onLogin,loginError,loginLoading}){
               style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
               onMouseEnter={e=>{e.currentTarget.style.background="#fff8ec";e.currentTarget.style.borderColor="#f6a623";}}
               onMouseLeave={e=>{e.currentTarget.style.background="#f8fafc";e.currentTarget.style.borderColor="#c8d8e8";}}>
-              <div style={{width:48,height:48,flexShrink:0}}>
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-                  <rect x="4" y="18" width="92" height="64" rx="10" fill="#CFD8E3" stroke="#37474F" strokeWidth="3"/>
-                  <rect x="60" y="18" width="36" height="64" rx="0" fill="#880E4F" fillOpacity="0.9"/>
-                  <rect x="64" y="18" width="32" height="64" rx="0" fill="#AD1457" fillOpacity="0.8"/>
-                  <line x1="60" y1="18" x2="72" y2="82" stroke="#C2185B" strokeWidth="3"/>
-                  <circle cx="28" cy="46" r="14" fill="#90A4AE" stroke="#455A64" strokeWidth="2.5"/>
-                  <circle cx="28" cy="40" r="6" fill="#B0BEC5"/>
-                  <ellipse cx="28" cy="57" rx="10" ry="6" fill="#3949AB"/>
-                  <rect x="10" y="67" width="24" height="3.5" rx="1.5" fill="#546E7A"/>
-                  <rect x="10" y="74" width="18" height="3.5" rx="1.5" fill="#546E7A"/>
-                  <rect x="67" y="52" width="18" height="4" rx="2" fill="#F48FB1"/>
-                  <rect x="67" y="62" width="13" height="4" rx="2" fill="#F48FB1"/>
+              <div style={{width:56,height:56,borderRadius:14,background:"#E8F4FB",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <svg viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg" width="50" height="44">
+                  <rect x="2" y="8" width="82" height="72" rx="6" fill="#E3F2F9"/>
+                  <rect x="2" y="8" width="40" height="72" rx="0" fill="#CFE9F5"/>
+                  <rect x="2" y="8" width="82" height="72" rx="6" fill="none" stroke="#B8D4E8" strokeWidth="2"/>
+                  <rect x="37" y="4" width="10" height="14" rx="3" fill="#FFC107"/>
+                  <rect x="39" y="2" width="6" height="8" rx="2" fill="#FFB300"/>
+                  <circle cx="22" cy="36" r="11" fill="#F4A896"/>
+                  <path d="M8 70 Q8 52 22 52 Q36 52 36 70" fill="#7C6BC0"/>
+                  <rect x="48" y="28" width="28" height="6" rx="3" fill="#6B5EA8"/>
+                  <rect x="48" y="42" width="22" height="6" rx="3" fill="#6B5EA8"/>
+                  <rect x="48" y="56" width="25" height="6" rx="3" fill="#6B5EA8"/>
+                  <circle cx="88" cy="76" r="20" fill="url(#cg)"/>
+                  <defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#66BB6A"/><stop offset="100%" stopColor="#26A69A"/></linearGradient></defs>
+                  <polyline points="78,76 85,84 100,66" fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
               <div>
@@ -659,8 +661,8 @@ function LoginScreen({onLogin,loginError,loginLoading}){
                   style={{padding:"6px 12px",borderRadius:8,border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.07)",color:"#5a7a9a",cursor:"pointer",fontSize:12}}>← Volver</button>
                 <div>
                   <div style={{display:"flex",alignItems:"center",gap:8,color:"#1a2f4a",fontWeight:700,fontSize:15}}>
-                  {step==="disenador"&&<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect x="5" y="52" width="90" height="42" rx="10" fill="#F5C842"/><rect x="14" y="46" width="72" height="48" rx="8" fill="#FFD966"/><rect x="38" y="60" width="18" height="28" rx="4" fill="#1A5276"/><rect x="20" y="8" width="11" height="48" rx="5.5" fill="#48C9B0"/><rect x="17" y="5" width="17" height="9" rx="4" fill="#1ABC9C"/><rect x="37" y="5" width="9" height="46" rx="4.5" fill="#F1948A"/><ellipse cx="41" cy="4" rx="6" ry="4" fill="#E74C3C"/><rect x="56" y="14" width="9" height="42" rx="4.5" fill="#BDC3C7"/><rect x="54" y="10" width="13" height="7" rx="3" fill="#E67E22"/></svg>}
-                  {step==="admin"&&<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect x="4" y="18" width="92" height="64" rx="10" fill="#CFD8E3" stroke="#37474F" strokeWidth="3"/><rect x="60" y="18" width="36" height="64" rx="0" fill="#880E4F" fillOpacity="0.9"/><rect x="64" y="18" width="32" height="64" rx="0" fill="#AD1457" fillOpacity="0.8"/><circle cx="28" cy="46" r="14" fill="#90A4AE" stroke="#455A64" strokeWidth="2.5"/><circle cx="28" cy="40" r="6" fill="#B0BEC5"/><ellipse cx="28" cy="57" rx="10" ry="6" fill="#3949AB"/><rect x="10" y="67" width="24" height="3.5" rx="1.5" fill="#546E7A"/><rect x="67" y="52" width="18" height="4" rx="2" fill="#F48FB1"/></svg>}
+                  {step==="disenador"&&<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><circle cx="50" cy="50" r="36" fill="none" stroke="#E0E0E0" strokeWidth="20"/><path d="M50 14 A36 36 0 0 1 86 50" fill="none" stroke="#81C784" strokeWidth="20"/><path d="M86 50 A36 36 0 0 1 68 82" fill="none" stroke="#FFB74D" strokeWidth="20"/><path d="M68 82 A36 36 0 0 1 32 82" fill="none" stroke="#F06292" strokeWidth="20"/><path d="M32 82 A36 36 0 0 1 14 50" fill="none" stroke="#64B5F6" strokeWidth="20"/><path d="M14 50 A36 36 0 0 1 50 14" fill="none" stroke="#AED581" strokeWidth="20"/><circle cx="50" cy="50" r="18" fill="white"/><line x1="30" y1="75" x2="62" y2="30" stroke="#1565C0" strokeWidth="6" strokeLinecap="round"/><polygon points="62,22 70,38 54,38" fill="#1565C0"/><polygon points="26,80 32,70 36,78" fill="#FFC107"/></svg>}
+                  {step==="admin"&&<svg viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg" width="22" height="20"><rect x="2" y="8" width="82" height="72" rx="6" fill="#E3F2F9"/><rect x="2" y="8" width="40" height="72" rx="0" fill="#CFE9F5"/><rect x="37" y="4" width="10" height="14" rx="3" fill="#FFC107"/><circle cx="22" cy="36" r="11" fill="#F4A896"/><path d="M8 70 Q8 52 22 52 Q36 52 36 70" fill="#7C6BC0"/><rect x="48" y="28" width="28" height="6" rx="3" fill="#6B5EA8"/><rect x="48" y="42" width="22" height="6" rx="3" fill="#6B5EA8"/><circle cx="88" cy="76" r="20" fill="url(#cg2)"/><defs><linearGradient id="cg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#66BB6A"/><stop offset="100%" stopColor="#26A69A"/></linearGradient></defs><polyline points="78,76 85,84 100,66" fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   {step==="viewer"&&<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect x="6" y="8" width="88" height="64" rx="8" fill="#3F51B5"/><rect x="12" y="14" width="76" height="52" rx="4" fill="#64B5F6"/><rect x="12" y="14" width="38" height="52" rx="0" fill="#81D4FA"/><circle cx="34" cy="40" r="14" fill="none" stroke="#37474F" strokeWidth="5"/><circle cx="34" cy="40" r="8" fill="#E3F2FD"/><circle cx="66" cy="40" r="14" fill="none" stroke="#455A64" strokeWidth="5"/><circle cx="66" cy="40" r="8" fill="#E8EAF6"/><rect x="47" y="38" width="6" height="4" rx="2" fill="#37474F"/><rect x="36" y="72" width="28" height="8" rx="3" fill="#90A4AE"/><rect x="28" y="78" width="44" height="8" rx="4" fill="#B0BEC5"/></svg>}
                   {p.titulo}
                 </div>
@@ -1458,7 +1460,12 @@ function TabUsuarios({S,showToast}){
   const ROL_META={
     admin:   {emoji:"🪪", label:"Admin",       color:"#f6a623", bg:"#fff8ec"},
     disenador:{emoji:"🎨", label:"Team Diseño", color:"#6c5ce7", bg:"#f0eeff"},
-    viewer:  {emoji:"👁️", label:"Visor",        color:"#0984e3", bg:"#e8f4fd"},
+    viewer:  {emoji:"🟢", label:"Visor",        color:"#0984e3", bg:"#e8f4fd"},
+  };
+  const ROL_ICON={
+    admin:    <svg width="14" height="14" viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg" style={{display:"inline-block",verticalAlign:"middle",marginRight:4}}><rect x="2" y="8" width="82" height="72" rx="6" fill="#E3F2F9"/><rect x="2" y="8" width="40" height="72" rx="0" fill="#CFE9F5"/><rect x="37" y="4" width="10" height="14" rx="3" fill="#FFC107"/><circle cx="22" cy="36" r="11" fill="#F4A896"/><path d="M8 70 Q8 52 22 52 Q36 52 36 70" fill="#7C6BC0"/><rect x="48" y="28" width="28" height="6" rx="3" fill="#6B5EA8"/><rect x="48" y="42" width="22" height="6" rx="3" fill="#6B5EA8"/><circle cx="88" cy="76" r="20" fill="#4CAF50"/><polyline points="78,76 85,84 100,66" fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    disenador:<svg width="14" height="14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{display:"inline-block",verticalAlign:"middle",marginRight:4}}><circle cx="50" cy="50" r="36" fill="none" stroke="#E0E0E0" strokeWidth="20"/><path d="M50 14 A36 36 0 0 1 86 50" fill="none" stroke="#81C784" strokeWidth="20"/><path d="M86 50 A36 36 0 0 1 68 82" fill="none" stroke="#FFB74D" strokeWidth="20"/><path d="M68 82 A36 36 0 0 1 32 82" fill="none" stroke="#F06292" strokeWidth="20"/><path d="M32 82 A36 36 0 0 1 14 50" fill="none" stroke="#64B5F6" strokeWidth="20"/><path d="M14 50 A36 36 0 0 1 50 14" fill="none" stroke="#AED581" strokeWidth="20"/><circle cx="50" cy="50" r="18" fill="white"/><line x1="30" y1="75" x2="62" y2="30" stroke="#1565C0" strokeWidth="6" strokeLinecap="round"/><polygon points="62,22 70,38 54,38" fill="#1565C0"/></svg>,
+    viewer:   <svg width="14" height="14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{display:"inline-block",verticalAlign:"middle",marginRight:4}}><ellipse cx="50" cy="50" rx="45" ry="28" fill="#0a2a0a" stroke="#00ff41" strokeWidth="3"/><ellipse cx="50" cy="50" rx="45" ry="28" fill="none" stroke="#00cc33" strokeWidth="1" strokeDasharray="4 2"/><circle cx="50" cy="50" r="16" fill="#003300" stroke="#00ff41" strokeWidth="2.5"/><circle cx="50" cy="50" r="9" fill="#00ff41" fillOpacity="0.9"/><circle cx="45" cy="45" r="3" fill="#66ffaa" fillOpacity="0.8"/><circle cx="50" cy="50" r="3" fill="#001a00"/><line x1="10" y1="50" x2="22" y2="50" stroke="#00ff41" strokeWidth="1.5"/><line x1="78" y1="50" x2="90" y2="50" stroke="#00ff41" strokeWidth="1.5"/><line x1="50" y1="10" x2="50" y2="22" stroke="#00ff41" strokeWidth="1.5"/><line x1="50" y1="78" x2="50" y2="90" stroke="#00ff41" strokeWidth="1.5"/></svg>,
   };
   useEffect(()=>{
     const unsub=onSnapshot(collection(db,"trade_users"),snap=>{
@@ -1513,8 +1520,8 @@ function TabUsuarios({S,showToast}){
             <div style={{display:"flex",gap:8}}>
               {ROLES_U.map(r=>{const m=ROL_META[r];return(
                 <button key={r} onClick={()=>setForm(p=>({...p,rol:r}))}
-                  style={{flex:1,padding:"10px 14px",borderRadius:9,border:"1.5px solid "+(form.rol===r?m.color:"#e2e8f0"),background:form.rol===r?m.bg:"#fff",color:form.rol===r?m.color:"#5a7a9a",cursor:"pointer",fontWeight:700,fontSize:12}}>
-                  {m.emoji} {m.label}
+                  style={{flex:1,padding:"10px 14px",borderRadius:9,border:"1.5px solid "+(form.rol===r?m.color:"#e2e8f0"),background:form.rol===r?m.bg:"#fff",color:form.rol===r?m.color:"#5a7a9a",cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                  {ROL_ICON[r]}{m.label}
                 </button>
               );})}
             </div>
@@ -1543,10 +1550,15 @@ function TabUsuarios({S,showToast}){
                   <div style={{fontSize:11,color:"#8aaabb",marginTop:1}}>DNI: {"•".repeat(4)+u.dni.slice(-3)}</div>
                 </div>}
               {editUserId!==u.id&&<>
-                <select value={u.rol} onChange={e=>handleCambiarRol(u.id,e.target.value)}
-                  style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid "+meta.color+"40",background:meta.bg,color:meta.color,fontWeight:700,fontSize:11,cursor:"pointer",outline:"none"}}>
-                  {ROLES_U.map(r=><option key={r} value={r}>{ROL_META[r].emoji} {ROL_META[r].label}</option>)}
-                </select>
+                <div style={{position:"relative",display:"flex",alignItems:"center"}}>
+                  <div style={{position:"absolute",left:8,zIndex:1,pointerEvents:"none",display:"flex",alignItems:"center"}}>
+                    {ROL_ICON[u.rol]||ROL_ICON.viewer}
+                  </div>
+                  <select value={u.rol} onChange={e=>handleCambiarRol(u.id,e.target.value)}
+                    style={{paddingLeft:26,paddingRight:10,paddingTop:6,paddingBottom:6,borderRadius:8,border:"1.5px solid "+meta.color+"40",background:meta.bg,color:meta.color,fontWeight:700,fontSize:11,cursor:"pointer",outline:"none"}}>
+                    {ROLES_U.map(r=><option key={r} value={r}>{ROL_META[r].label}</option>)}
+                  </select>
+                </div>
                 <button onClick={()=>{setEditUserId(u.id);setEditUserData({nombre:u.nombre,dni:u.dni});}}
                   style={{padding:"6px 10px",borderRadius:8,border:"1px solid #a29bfe",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontWeight:700,fontSize:11}}>✏️</button>
                 <button onClick={()=>handleToggle(u.id,u.activo)}
@@ -1566,7 +1578,7 @@ function TabUsuarios({S,showToast}){
 /* ══ TAB CONFIG — SIN TAB USUARIOS ═════════════════════ */
 function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNewTipo,newDis,setNewDis,showNewT,setShowNewT,showNewD,setShowNewD,showToast}){
   /* 4 tabs: Tipos · Diseñadores · Áreas · Usuarios */
-  const tabs=["📦 Tipos de trabajo","📐 Áreas","🫂 Usuarios"];
+  const tabs=["📦 Tipos de trabajo","📐 Áreas","👤 Usuarios"];
   const tipos=config.tipos||[];
   const dis=config.disenadores||[];
   const areas=config.areas||AREAS_DEFAULT;
