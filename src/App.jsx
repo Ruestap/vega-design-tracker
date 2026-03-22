@@ -459,7 +459,7 @@ export default function TradeApp() {
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
       <div style={{background:"#1a2f4a",padding:"11px 18px 0",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-          <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#1a1a2e,#16213e)",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(255,255,255,.2)"}}>
+          <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#4A5568,#2D3748)",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(255,255,255,.2)"}}>
               <svg width="24" height="24" viewBox="0 0 52 52" fill="none">
                 <rect x="2" y="2" width="22" height="22" rx="3" fill="#FF6B6B"/>
                 <text x="13" y="18" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold" fontFamily="Arial">Id</text>
@@ -547,7 +547,7 @@ function LoginScreen({onLogin,loginError,loginLoading}){
 
         {/* Logo */}
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,marginBottom:28,textAlign:"center"}}>
-          <div style={{width:72,height:72,borderRadius:18,background:"linear-gradient(135deg,#1a1a2e,#16213e)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid rgba(255,255,255,.15)",overflow:"hidden"}}>
+          <div style={{width:72,height:72,borderRadius:18,background:"linear-gradient(135deg,#4A5568,#2D3748)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid rgba(255,255,255,.2)",overflow:"hidden"}}>
             <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
               <rect x="2" y="2" width="22" height="22" rx="3" fill="#FF6B6B"/>
               <text x="13" y="18" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="Arial">Id</text>
@@ -573,17 +573,19 @@ function LoginScreen({onLogin,loginError,loginLoading}){
               style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
               onMouseEnter={e=>{e.currentTarget.style.background="#f0edff";e.currentTarget.style.borderColor="#6c5ce7";}}
               onMouseLeave={e=>{e.currentTarget.style.background="#f8fafc";e.currentTarget.style.borderColor="#c8d8e8";}}>
-              <div style={{width:48,height:48,flexShrink:0}}>
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-                  <rect x="0" y="55" width="100" height="45" rx="8" fill="#FFD166"/>
-                  <rect x="10" y="50" width="80" height="50" rx="6" fill="#FFE08A"/>
-                  <rect x="40" y="62" width="20" height="30" rx="3" fill="#2D6A8F"/>
-                  <rect x="22" y="15" width="12" height="50" rx="6" fill="#06D6A0"/>
-                  <rect x="19" y="12" width="18" height="8" rx="4" fill="#05B08A"/>
-                  <rect x="40" y="10" width="10" height="48" rx="5" fill="#F78C8C"/>
-                  <ellipse cx="45" cy="9" rx="7" ry="5" fill="#F05454"/>
-                  <rect x="60" y="18" width="10" height="42" rx="5" fill="#BDBDBD"/>
-                  <polygon points="65,15 60,20 70,20" fill="#FF9800"/>
+              <div style={{width:56,height:56,borderRadius:14,background:"#E8ECF0",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
+                  <rect x="5" y="52" width="90" height="42" rx="10" fill="#F5C842"/>
+                  <rect x="14" y="46" width="72" height="48" rx="8" fill="#FFD966"/>
+                  <rect x="38" y="60" width="18" height="28" rx="4" fill="#1A5276"/>
+                  <rect x="20" y="8" width="11" height="48" rx="5.5" fill="#48C9B0"/>
+                  <rect x="17" y="5" width="17" height="9" rx="4" fill="#1ABC9C"/>
+                  <rect x="37" y="5" width="9" height="46" rx="4.5" fill="#F1948A"/>
+                  <ellipse cx="41" cy="4" rx="6" ry="4" fill="#E74C3C"/>
+                  <rect x="56" y="14" width="9" height="42" rx="4.5" fill="#BDC3C7"/>
+                  <rect x="54" y="10" width="13" height="7" rx="3" fill="#E67E22"/>
+                  <rect x="57" y="30" width="7" height="3" rx="1.5" fill="#E67E22"/>
+                  <rect x="57" y="38" width="7" height="3" rx="1.5" fill="#E67E22"/>
                 </svg>
               </div>
               <div>
@@ -623,27 +625,20 @@ function LoginScreen({onLogin,loginError,loginLoading}){
               style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
               onMouseEnter={e=>{e.currentTarget.style.background="#e8f4fd";e.currentTarget.style.borderColor="#0984e3";}}
               onMouseLeave={e=>{e.currentTarget.style.background="#f8fafc";e.currentTarget.style.borderColor="#c8d8e8";}}>
-              <div style={{width:48,height:48,flexShrink:0}}>
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-                  <circle cx="50" cy="50" r="18" fill="#5C6BC0"/>
-                  <circle cx="50" cy="44" r="8" fill="#E8EAF6"/>
-                  <ellipse cx="50" cy="58" rx="10" ry="6" fill="#E8EAF6"/>
-                  <circle cx="50" cy="12" r="8" fill="#64B5F6"/>
-                  <circle cx="50" cy="88" r="8" fill="#64B5F6"/>
-                  <circle cx="12" cy="50" r="8" fill="#64B5F6"/>
-                  <circle cx="88" cy="50" r="8" fill="#64B5F6"/>
-                  <circle cx="22" cy="22" r="8" fill="#90CAF9"/>
-                  <circle cx="78" cy="22" r="8" fill="#90CAF9"/>
-                  <circle cx="22" cy="78" r="8" fill="#90CAF9"/>
-                  <circle cx="78" cy="78" r="8" fill="#90CAF9"/>
-                  <line x1="50" y1="32" x2="50" y2="20" stroke="#B0BEC5" strokeWidth="3"/>
-                  <line x1="50" y1="68" x2="50" y2="80" stroke="#B0BEC5" strokeWidth="3"/>
-                  <line x1="32" y1="50" x2="20" y2="50" stroke="#B0BEC5" strokeWidth="3"/>
-                  <line x1="68" y1="50" x2="80" y2="50" stroke="#B0BEC5" strokeWidth="3"/>
-                  <line x1="37" y1="37" x2="28" y2="28" stroke="#B0BEC5" strokeWidth="3"/>
-                  <line x1="63" y1="37" x2="72" y2="28" stroke="#B0BEC5" strokeWidth="3"/>
-                  <line x1="37" y1="63" x2="28" y2="72" stroke="#B0BEC5" strokeWidth="3"/>
-                  <line x1="63" y1="63" x2="72" y2="72" stroke="#B0BEC5" strokeWidth="3"/>
+              <div style={{width:56,height:56,borderRadius:14,background:"#E8ECF0",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
+                  <rect x="6" y="8" width="88" height="64" rx="8" fill="#3F51B5"/>
+                  <rect x="12" y="14" width="76" height="52" rx="4" fill="#64B5F6"/>
+                  <rect x="12" y="14" width="38" height="52" rx="0" fill="#81D4FA"/>
+                  <circle cx="34" cy="40" r="14" fill="none" stroke="#37474F" strokeWidth="5"/>
+                  <circle cx="34" cy="40" r="8" fill="#E3F2FD"/>
+                  <circle cx="66" cy="40" r="14" fill="none" stroke="#455A64" strokeWidth="5"/>
+                  <circle cx="66" cy="40" r="8" fill="#E8EAF6"/>
+                  <rect x="47" y="38" width="6" height="4" rx="2" fill="#37474F"/>
+                  <rect x="6" y="37" width="10" height="5" rx="2.5" fill="#37474F"/>
+                  <rect x="84" y="37" width="10" height="5" rx="2.5" fill="#455A64"/>
+                  <rect x="36" y="72" width="28" height="8" rx="3" fill="#90A4AE"/>
+                  <rect x="28" y="78" width="44" height="8" rx="4" fill="#B0BEC5"/>
                 </svg>
               </div>
               <div>
@@ -687,7 +682,12 @@ function LoginScreen({onLogin,loginError,loginLoading}){
                   />
                   <button type="button" onClick={()=>setShowDni(v=>!v)}
                     style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#8aaabb",fontSize:16,padding:0,lineHeight:1}}>
-                    {showDni?"🙈":"👁️"}
+                    <svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      {showDni
+        ?<g><rect x="20" y="45" width="60" height="42" rx="8" fill="#4A90D9"/><path d="M32 45V32C32 18 68 18 68 32V45" fill="none" stroke="#2C5F8A" strokeWidth="7" strokeLinecap="round"/><rect x="40" y="58" width="20" height="20" rx="4" fill="#2ECC71"/><polyline points="44,68 48,74 56,62" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/></g>
+        :<g><rect x="20" y="45" width="60" height="42" rx="8" fill="#F39C12"/><path d="M32 45V32C32 18 68 18 68 32V45" fill="none" stroke="#E67E22" strokeWidth="7" strokeLinecap="round" strokeDasharray="8 4"/><line x1="36" y1="58" x2="64" y2="80" stroke="#E74C3C" strokeWidth="6" strokeLinecap="round"/><line x1="64" y1="58" x2="36" y2="80" stroke="#E74C3C" strokeWidth="6" strokeLinecap="round"/></g>
+      }
+    </svg>
                   </button>
                 </div>
                 <button type="submit" disabled={loginLoading||!dni.trim()}
