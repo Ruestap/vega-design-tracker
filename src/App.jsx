@@ -144,6 +144,55 @@ function NotificacionesBell({uId,onVerReq}){
 
 /* ══ UTILS ══════════════════════════════════════════════ */
 const todayStr = () => new Date().toISOString().slice(0,10);
+
+function getAlerta(req) {
+  const hoy = todayStr();
+  const ahora = new Date();
+  const stat = req.stat;
+  const fe = req.fechaEntrega || req.deadline || "";
+  const fi = req.fechaInicio || "";
+  const hc = req.horaCorte || "";
+
+  if(stat==="cancelado") return {label:"Finalizado",c:"#b2bec3",bg:"#f4f6f8"};
+  if(stat==="entregado") return {label:"Finalizado",c:"#00b894",bg:"#e8faf5"};
+
+  if(stat==="aprobacion") return {label:"En proceso",c:"#0984e3",bg:"#e8f4fd"};
+
+  // Verificar si ya pasó la fecha+hora de corte
+  if(fe) {
+    if(hoy > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
+    if(hoy === fe) {
+      if(hc) {
+        const [hh,mm] = hc.split(":").map(Number);
+        const corte = new Date(); corte.setHours(hh,mm,0,0);
+        if(ahora > corte) return {label:"Retraso",c:"#dc2626",bg:"#ffeae6"};
+        return {label:"Hoy · vence "+hc,c:"#e17055",bg:"#fff1ee"};
+      }
+      return {label:"Vence hoy",c:"#e17055",bg:"#fff1ee"};
+    }
+  }
+
+  if(stat==="pendiente") {
+    if(fi && hoy < fi) return {label:"Pendiente",c:"#f6a623",bg:"#fff8ec"};
+    if(fe && hoy > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
+    return {label:"Pendiente",c:"#f6a623",bg:"#fff8ec"};
+  }
+
+  if(stat==="en_diseno") {
+    if(fe && hoy > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
+    const dias = fe ? Math.ceil((new Date(fe)-new Date(hoy))/86400000) : null;
+    if(dias!==null && dias<=2) return {label:"Próximo "+dias+"d",c:"#e17055",bg:"#fff1ee"};
+    return {label:"En diseño",c:"#6c5ce7",bg:"#f0edff"};
+  }
+
+  return {label:"—",c:"#b2bec3",bg:"#f4f6f8"};
+}
+
+function calcDiasRetraso(fechaStr) {
+  if(!fechaStr) return 0;
+  return Math.ceil((new Date(todayStr())-new Date(fechaStr))/86400000);
+}
+
 const sc = v=>{ if(!v&&v!==0)return"#b2bec3"; if(v>=90)return"#00b894"; if(v>=70)return"#f6a623"; if(v>=50)return"#e17055"; return"#d63031"; };
 
 function calcHH(inicio, fin) {
@@ -310,7 +359,7 @@ export default function TradeApp() {
 
   function emptyBrief(){
     return{titulo:"",area:"Trade Marketing",solicitante:"",prioridad:"Normal",
-      tipo:"",deadline:"",hEst:"",objetivo:"",publico:"",mensaje:"",
+      tipo:"",fechaInicio:"",fechaEntrega:"",horaCorte:"",hEst:"",objetivo:"",publico:"",mensaje:"",
       mecanica:"",materiales:[],medidas:"",tono:"",restricciones:"",
       comentarios:"",recursos:"",productosInvolucrados:"",
       responableId:"",responableNombre:""};
@@ -318,12 +367,16 @@ export default function TradeApp() {
 
   /* ── Guardar actividad ── */
   const guardarSolicitud=async()=>{
-    if(!brief.titulo||!brief.tipo||!brief.deadline){showToast("⚠ Completa título, tipo y deadline");return;}
+    if(!brief.titulo||!brief.tipo||!brief.fechaEntrega){showToast("⚠ Completa título, tipo y fecha de entrega");return;}
     const id=briefEdit||"ACT-"+Date.now();
     const now2=new Date().toISOString();
     const existing=solicitudes.find(s=>s.id===briefEdit);
     const data={
       ...brief,id,
+      deadline:brief.fechaEntrega||"",
+      fechaInicio:brief.fechaInicio||"",
+      fechaEntrega:brief.fechaEntrega||"",
+      horaCorte:brief.horaCorte||"",
       stat:briefEdit?(existing?.stat||"pendiente"):(brief.responableId?"en_diseno":"pendiente"),
       tsAsignado:briefEdit?(existing?.tsAsignado||null):(brief.responableId?new Date().toISOString():null),
       creadoEn:briefEdit?(existing?.creadoEn||now2):now2,
@@ -367,7 +420,7 @@ export default function TradeApp() {
   const aprobarEntrega=async(reqId)=>{
     const req=solicitudes.find(s=>s.id===reqId);if(!req)return;
     const ts=new Date().toISOString();
-    const aT=todayStr()<=req.deadline;
+    const aT=todayStr()<=(req.fechaEntrega||req.deadline||"9999-12-31");
     await setDoc(doc(db,"trade_solicitudes",reqId),{
       ...req,stat:aT?"entregado":"retrasado",tsEntregado:ts,aTiempo:aT,updatedAt:ts,
     });
@@ -395,7 +448,7 @@ export default function TradeApp() {
     setBrief({
       titulo:req.titulo||"",area:req.area||"Trade Marketing",
       solicitante:req.solicitante||"",prioridad:req.prioridad||"Normal",
-      tipo:req.tipo||"",deadline:req.deadline||"",hEst:req.hEst||"",
+      tipo:req.tipo||"",fechaInicio:req.fechaInicio||"",fechaEntrega:req.fechaEntrega||"",horaCorte:req.horaCorte||"",hEst:req.hEst||"",
       objetivo:req.objetivo||"",publico:req.publico||"",mensaje:req.mensaje||"",
       mecanica:req.mecanica||"",materiales:req.materiales||[],
       medidas:req.medidas||"",tono:req.tono||"",restricciones:req.restricciones||"",
@@ -771,7 +824,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
             <thead>
               <tr style={{background:"#f8fafc"}}>
-                {["ACTIVIDAD","TIPO","ESTADO","RESPONSABLE","HH","DEADLINE","ÁREA",""].map((h,i)=>(
+                {["ACTIVIDAD","TIPO","ALERTA","RESPONSABLE","F.INICIO","F.ENTREGA","HORA CORTE","HH","ÁREA",""].map((h,i)=>(
                   <th key={i} style={{padding:"9px 12px",textAlign:i>1?"center":"left",color:"#5a7a9a",fontWeight:700,fontSize:9,letterSpacing:".06em",borderBottom:"1px solid #e9eef5",whiteSpace:"nowrap"}}>{h}</th>
                 ))}
               </tr>
@@ -796,7 +849,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                       <span style={S.pill(c+"cc",c+"18")}>{tipo?.e||"📌"} {tipo?.n||req.tipo}</span>
                     </td>
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:c,background:c+"18"}}>{STAT_L[req.stat]||req.stat}</span>
+                      {(()=>{const a=getAlerta(req);return <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:a.c,background:a.bg,whiteSpace:"nowrap"}}>{a.label}</span>;})()}
                     </td>
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
                       {resp
@@ -807,13 +860,18 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                         :<span style={{fontSize:10,color:"#b2bec3"}}>Sin asignar</span>}
                     </td>
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      {req.hReal>0
-                        ?<span style={{fontWeight:700,color:req.hReal>(parseFloat(req.hEst)||99)?"#e17055":"#00b894"}}>{req.hReal}h</span>
-                        :<span style={{color:"#b2bec3"}}>— / {req.hEst||"—"}h</span>}
+                      <span style={{fontSize:11,color:"#5a7a9a"}}>{req.fechaInicio||req.creadoEn?.slice(0,10)||"—"}</span>
                     </td>
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <span style={{fontWeight:700,color:vencida?"#e17055":"#5a7a9a",fontSize:11}}>{req.deadline||"—"}</span>
-                      {vencida&&<div style={{fontSize:8,color:"#e17055",fontWeight:700}}>VENCIDO</div>}
+                      <span style={{fontWeight:700,color:"#1a2f4a",fontSize:11}}>{req.fechaEntrega||req.deadline||"—"}</span>
+                    </td>
+                    <td style={{padding:"10px 8px",textAlign:"center"}}>
+                      <span style={{fontSize:11,color:"#5a7a9a"}}>{req.horaCorte||"—"}</span>
+                    </td>
+                    <td style={{padding:"10px 8px",textAlign:"center"}}>
+                      {req.hReal>0
+                        ?<span style={{fontWeight:700,color:req.hReal>(parseFloat(req.hEst)||99)?"#e17055":"#00b894"}}>{req.hReal}h</span>
+                        :<span style={{color:"#b2bec3"}}>—h</span>}
                     </td>
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
                       <span style={S.pill("#5a7a9a","#f0f4f8")}>{req.area||"—"}</span>
@@ -903,7 +961,9 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
           <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>TÍTULO <span style={{color:"#e17055"}}>*</span></label><input value={brief.titulo} onChange={e=>set("titulo",e.target.value)} placeholder="Ej: Catálogo Verano 2026" style={S.inp}/></div>
           <div><label style={S.lbl}>SOLICITANTE</label><input value={brief.solicitante} onChange={e=>set("solicitante",e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>ÁREA</label><select value={brief.area} onChange={e=>set("area",e.target.value)} style={S.inp}>{areas.map(a=><option key={a}>{a}</option>)}</select></div>
-          <div><label style={S.lbl}>DEADLINE <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.deadline} onChange={e=>set("deadline",e.target.value)} style={S.inp}/></div>
+          <div><label style={S.lbl}>FECHA INICIO <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.fechaInicio} onChange={e=>set("fechaInicio",e.target.value)} style={S.inp}/></div>
+          <div><label style={S.lbl}>FECHA ENTREGA <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.fechaEntrega} onChange={e=>set("fechaEntrega",e.target.value)} style={S.inp}/></div>
+          <div><label style={S.lbl}>HORA DE CORTE <span style={{fontSize:9,color:"#8aaabb",fontWeight:400}}>(pasada esta hora → retraso)</span></label><input type="time" value={brief.horaCorte} onChange={e=>set("horaCorte",e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>PRIORIDAD</label><select value={brief.prioridad} onChange={e=>set("prioridad",e.target.value)} style={S.inp}>{["Normal","Media","Alta","Urgente"].map(p=><option key={p}>{p}</option>)}</select></div>
           <div style={{gridColumn:"1/-1"}}>
             <label style={S.lbl}>RESPONSABLE <span style={{color:"#8aaabb",fontWeight:400}}>(opcional — asigna directamente al diseñador)</span></label>
