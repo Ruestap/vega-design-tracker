@@ -544,26 +544,23 @@ export default function TradeApp() {
     await setDoc(doc(db,"trade_solicitudes",id),data);
 
     if(!briefEdit) {
-      const esPrioritaria = AREAS_PRIORITARIAS.includes(data.area||"");
-      if(data.responableId && esPrioritaria) {
-        // Caso 1: área prioritaria CON diseñador asignado → notificar diseñador
+      if(data.notificarA && data.notificarA.length>0) {
+        // CASO VISOR: seleccionó destinatarios Trade → email directo
+        const destinatarios = tradeUsers.filter(u=>data.notificarA.includes(u.id) && u.email);
+        if(destinatarios.length>0) {
+          const emails = destinatarios.map(u=>u.email);
+          const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
+          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app?logout=1";
+          setTimeout(()=>abrirEmail(emails, asunto, cuerpo), 500);
+        }
+      } else if(data.responableId) {
+        // CASO ADMIN con diseñador asignado → panel notificación
         const dis = tradeUsers.find(u=>u.id===data.responableId);
         if(dis) {
           const msg = buildMsgAsignacion(data, dis.nombre);
           const asunto = "Nueva actividad asignada: "+data.titulo;
           const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+data.titulo+"\nEntrega: "+(data.fechaEntrega||"—")+" "+(data.horaCorte||"")+"\nÁrea: "+(data.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
           setPanelNotif({nombre:dis.nombre,telefono:dis.telefono||"",email:dis.email||"",msgWA:msg,asunto,cuerpoEmail,titulo:data.titulo,reqId:data.id});
-        }
-      } else if(!data.responableId && !esPrioritaria) {
-        // Caso 2: Visor u otras áreas SIN diseñador → email automático a admins Trade
-        const notificarIds = data.notificarA&&data.notificarA.length>0 ? data.notificarA : null;
-        const admins = tradeUsers.filter(u=>u.rol==="admin" && u.activo!==false && u.email && (!notificarIds||notificarIds.includes(u.id)));
-        if(admins.length>0) {
-          const emails = admins.map(u=>u.email);
-          const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
-          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño pendiente de asignación.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app?logout=1";
-          // Enviar email automáticamente — el visor no necesita hacer nada más
-          setTimeout(()=>abrirEmail(emails, asunto, cuerpo), 500);
         }
       }
     }
