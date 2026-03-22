@@ -558,6 +558,19 @@ export default function TradeApp() {
     setBriefModal(true);
   };
 
+  /* ── Helper: resolver responsable desde trade_users O config.disenadores ── */
+  const resolverResp = useCallback((responableId, responableNombre)=>{
+    if(!responableId && !responableNombre) return null;
+    // Buscar en trade_users primero
+    const u = tradeUsers.find(u=>u.id===responableId || u.nombre===responableNombre);
+    if(u) return {id:u.id, nombre:u.nombre, iniciales:getIniciales(u.nombre), color:u.color||"#6c5ce7", email:u.email||"", telefono:u.telefono||""};
+    // Fallback a config.disenadores
+    const d = (config.disenadores||[]).find(d=>d.id===responableId || d.nombre===responableNombre);
+    if(d) return {id:d.id, nombre:d.nombre, iniciales:d.iniciales||getIniciales(d.nombre), color:d.color||"#6c5ce7", email:"", telefono:""};
+    if(responableNombre) return {id:responableId, nombre:responableNombre, iniciales:getIniciales(responableNombre), color:"#6c5ce7", email:"", telefono:""};
+    return null;
+  },[tradeUsers, config.disenadores]);
+
   /* ── Computed ── */
   const role=usuario?.rol||null;
   const uName=usuario?.nombre||"";
@@ -933,7 +946,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
               {solicitudes.length===0&&<tr><td colSpan={8} style={{textAlign:"center",padding:36,color:"#b2bec3"}}>Sin actividades — crea la primera con "＋ Nueva actividad"</td></tr>}
               {solicitudes.map(req=>{
                 const tipo=tipos.find(t=>t.id===req.tipo);
-                const resp=dis.find(d=>d.id===req.responableId);
+                const resp=resolverResp?resolverResp(req.responableId,req.responableNombre):dis.find(d=>d.id===req.responableId);
                 const c=STAT_C[req.stat]||"#b2bec3";
                 const hoy=todayStr();
                 const vencida=req.deadline&&hoy>req.deadline&&!["entregado","cancelado"].includes(req.stat);
@@ -1274,7 +1287,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {items.map(req=>{
                   const tipo=tipos.find(t=>t.id===req.tipo);
-                  const resp=dis.find(d=>d.id===req.responableId);
+                  const resp=resolverResp?resolverResp(req.responableId,req.responableNombre):dis.find(d=>d.id===req.responableId);
                   const c=STAT_C[req.stat]||"#b2bec3";
                   const vencida=req.deadline&&todayStr()>req.deadline&&!["entregado","cancelado"].includes(req.stat);
                   return(
