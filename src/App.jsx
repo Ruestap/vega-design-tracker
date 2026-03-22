@@ -346,6 +346,7 @@ export default function TradeApp() {
 
   /* ── data Firebase ── */
   const [solicitudes, setSolicitudes] = useState([]);
+  const [tradeUsers,  setTradeUsers]  = useState([]);
   const [config, setConfig] = useState({
     tipos: TIPOS_DEFAULT,
     areas: AREAS_DEFAULT,
@@ -396,6 +397,15 @@ export default function TradeApp() {
   useEffect(()=>{
     const unsub=onSnapshot(doc(db,"trade_config","app"),snap=>{
       if(snap.exists()) setConfig(c=>({...c,...snap.data()}));
+    });
+    return()=>unsub();
+  },[]);
+
+  useEffect(()=>{
+    const unsub=onSnapshot(collection(db,"trade_users"),snap=>{
+      const arr=[];
+      snap.forEach(d=>arr.push({id:d.id,...d.data()}));
+      setTradeUsers(arr);
     });
     return()=>unsub();
   },[]);
