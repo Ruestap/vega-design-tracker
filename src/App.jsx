@@ -193,6 +193,38 @@ function calcDiasRetraso(fechaStr) {
   return Math.ceil((new Date(todayStr())-new Date(fechaStr))/86400000);
 }
 
+function calcHHManual(req) {
+  // Calcula HH desde fechaInicio+horaInicio hasta fechaEntrega+horaCorte
+  // L-V 08:30-18:30, Sab 08:30-11:30
+  const fi = req.fechaInicio || req.creadoEn?.slice(0,10);
+  const fe = req.fechaEntrega || req.deadline;
+  const hi = req.horaInicio || "08:30";
+  const hc = req.horaCorte || "18:30";
+  if(!fi||!fe) return null;
+  const inicio = new Date(fi+"T"+hi+":00");
+  const fin = new Date(fe+"T"+hc+":00");
+  if(fin<=inicio) return null;
+  let hh=0, cur=new Date(inicio);
+  while(cur<fin){
+    const dow=cur.getDay();
+    const nextDay=new Date(cur); nextDay.setHours(23,59,59,999);
+    const dayEnd=nextDay<fin?nextDay:fin;
+    if(dow>=1&&dow<=5){
+      const s=new Date(cur); s.setHours(8,30,0,0);
+      const e=new Date(cur); e.setHours(18,30,0,0);
+      const from=Math.max(cur,s), to=Math.min(dayEnd,e);
+      if(to>from) hh+=(to-from)/3600000;
+    } else if(dow===6){
+      const s=new Date(cur); s.setHours(8,30,0,0);
+      const e=new Date(cur); e.setHours(11,30,0,0);
+      const from=Math.max(cur,s), to=Math.min(dayEnd,e);
+      if(to>from) hh+=(to-from)/3600000;
+    }
+    cur=new Date(cur); cur.setDate(cur.getDate()+1); cur.setHours(0,0,0,0);
+  }
+  return Math.round(hh*10)/10||null;
+}
+
 function calcTiempo(req) {
   const fi = req.fechaInicio || req.creadoEn?.slice(0,10);
   const fe = req.fechaEntrega || req.deadline;
@@ -838,7 +870,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
             <thead>
               <tr style={{background:"#f8fafc"}}>
-                {["TIPO","ACTIVIDAD","ÁREA","RESPONSABLE","F. ENTREGA","ESTATUS","ALERTA","TIEMPO","DÍAS",""].map((h,i)=>(
+                {["TIPO","ACTIVIDAD","ÁREA SOLICITANTE","RESPONSABLE","F. ENTREGA","ESTATUS","ALERTA","HH","TIEMPO","DÍAS",""].map((h,i)=>(
                   <th key={i} style={{padding:"9px 12px",textAlign:"left",color:"#5a7a9a",fontWeight:700,fontSize:9,letterSpacing:".06em",borderBottom:"1px solid #e9eef5",whiteSpace:"nowrap"}}>{h}</th>
                 ))}
               </tr>
@@ -855,15 +887,18 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                   <tr key={req.id} style={{borderBottom:"1px solid #f5f7fa"}}
                     onMouseEnter={e=>e.currentTarget.style.background="#f8fcff"}
                     onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                      <td style={{padding:"10px 8px"}}>
-                      <span style={S.pill(c+"cc",c+"18")}>{tipo?.e||"📌"} {tipo?.n||req.tipo}</span>
+                      <td style={{padding:"10px 8px",whiteSpace:"nowrap"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:10,background:c+"12",border:"1px solid "+c+"30",width:"fit-content"}}>
+                        <span style={{fontSize:15}}>{tipo?.e||"📌"}</span>
+                        <span style={{fontSize:10,fontWeight:700,color:c}}>{tipo?.n||req.tipo}</span>
+                      </div>
                     </td>
                     <td style={{padding:"10px 12px",minWidth:180}}>
                       <div style={{fontWeight:700,color:"#1a2f4a",marginBottom:2}}>{req.titulo}</div>
                       <div style={{fontSize:9,color:"#8aaabb"}}>{req.id} · {req.creadoPor} · {req.creadoEn?.slice(0,10)}</div>
                     </td>
-                    <td style={{padding:"10px 8px"}}>
-                      <span style={S.pill("#5a7a9a","#f0f4f8")}>{req.area||"—"}</span>
+                    <td style={{padding:"10px 8px",maxWidth:130}}>
+                      <span style={{fontSize:11,color:"#5a7a9a",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{req.area||"—"}</span>
                     </td>
                     <td style={{padding:"10px 8px"}}>
                       {resp
@@ -891,6 +926,13 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                     <td style={{padding:"10px 8px"}}>
                       {(()=>{const a=getAlerta(req);return <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:a.c,background:a.bg,whiteSpace:"nowrap"}}>{a.label}</span>;})()}
                     </td>
+                    <td style={{padding:"10px 8px",textAlign:"center"}}>
+                      {(()=>{
+                        const hh=calcHHManual(req);
+                        if(!hh) return <span style={{color:"#b2bec3",fontSize:11}}>—</span>;
+                        return <span style={{fontWeight:700,fontSize:11,color:"#0984e3"}}>{hh}h</span>;
+                      })()}
+                    </td>
                     <td style={{padding:"10px 8px",minWidth:100}}>
                       {(()=>{
                         const t=calcTiempo(req);
@@ -915,7 +957,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                     </td>
 
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap"}}>
+                      <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"center"}}>
                         {isAdmin&&<button onClick={()=>editarActividad(req)} style={{padding:"4px 8px",borderRadius:7,border:"1px solid #a29bfe",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:10,fontWeight:700}}>✏️</button>}
                         {isAdmin&&req.stat==="pendiente"&&<button onClick={()=>setAssignModal(req)} style={{padding:"4px 9px",borderRadius:7,border:"1px solid #6c5ce7",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:10,fontWeight:700}}>Asignar</button>}
                         {isAdmin&&req.stat==="aprobacion"&&<>
