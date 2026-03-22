@@ -193,10 +193,10 @@ function calcDiasRetraso(fechaStr) {
   return Math.ceil((new Date(todayStr())-new Date(fechaStr))/86400000);
 }
 
-function getDisponibilidad(disId, solicitudes, fechaNueva, horaCorteNueva) {
-  // Retorna: {nivel:"libre"|"ocupado"|"sobrecargado", msg:string, activos:number}
+function getDisponibilidad(disId, solicitudes, fechaNueva, horaCorteNueva, disNombre) {
+  // Cruza por ID (trade_users) O por nombre (config.disenadores) para compatibilidad
   const activas = solicitudes.filter(s =>
-    s.responableId === disId &&
+    (s.responableId === disId || (disNombre && s.responableNombre === disNombre)) &&
     ["en_diseno","aprobacion","pendiente"].includes(s.stat)
   );
   if(activas.length === 0) return {nivel:"libre", msg:"Disponible · sin tareas activas", activos:0};
@@ -1095,7 +1095,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
                 <span>Sin asignar</span>
               </label>
               {disenadoresList.map(d=>{
-                const disp=getDisponibilidad(d.id,solicitudes||[],brief.fechaEntrega,brief.horaCorte);
+                const disp=getDisponibilidad(d.id,solicitudes||[],brief.fechaEntrega,brief.horaCorte,d.nombre);
                 const bC=disp.nivel==="libre"?"#00b894":disp.nivel==="ocupado"?"#f6a623":"#e17055";
                 const selC=brief.responableId===d.id?"#6c5ce7":"#e2e8f0";
                 return(
