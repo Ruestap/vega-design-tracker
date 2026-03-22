@@ -19,23 +19,23 @@ async function crearNotif({destinatarioId,tipo,titulo,mensaje,reqId}){
 async function notifAsignacion({disId,disNombre,req}){
   await crearNotif({destinatarioId:disId,tipo:"asignacion",
     titulo:"Nuevo trabajo asignado",
-    mensaje:`Se te asignó: "${req.titulo}" · Deadline: ${req.deadline||"sin fecha"}`,reqId:req.id});
+    mensaje:"Se te asignó: \""+req.titulo+"\" · Deadline: "+(req.deadline||"sin fecha"),reqId:req.id});
 }
 async function notifListoParaRevision({adminId,req}){
   if(!adminId) return;
   await crearNotif({destinatarioId:adminId,tipo:"aprobacion",
     titulo:"Listo para revisión",
-    mensaje:`"${req.titulo}" está listo para que lo revises y apruebes.`,reqId:req.id});
+    mensaje:"\""+req.titulo+"\" está listo para que lo revises y apruebes.",reqId:req.id});
 }
 async function notifAprobado({disId,req}){
   await crearNotif({destinatarioId:disId,tipo:"entregado",
     titulo:"Entrega aprobada ✓",
-    mensaje:`"${req.titulo}" fue aprobado${req.aTiempo?" a tiempo":" (con retraso)"}.`,reqId:req.id});
+    mensaje:"\""+req.titulo+"\" fue aprobado"+(req.aTiempo?" a tiempo":" (con retraso)")+".",reqId:req.id});
 }
 async function notifRechazo({disId,req,motivo}){
   await crearNotif({destinatarioId:disId,tipo:"rechazo",
     titulo:"Correcciones solicitadas",
-    mensaje:`"${req.titulo}": ${motivo||"revisa las observaciones"}`,reqId:req.id});
+    mensaje:"\""+req.titulo+"\": "+(motivo||"revisa las observaciones"),reqId:req.id});
 }
 async function marcarNotifLeida(id){
   await updateDoc(doc(db,NOTIF_COL,id),{leida:true});
@@ -316,7 +316,8 @@ export default function TradeApp() {
     return{titulo:"",area:"Trade Marketing",solicitante:"",prioridad:"Normal",
       tipo:"",deadline:"",hEst:"",objetivo:"",publico:"",mensaje:"",
       mecanica:"",materiales:[],medidas:"",tono:"",restricciones:"",
-      comentarios:"",recursos:"",productosInvolucrados:""};
+      comentarios:"",recursos:"",productosInvolucrados:"",
+      responableId:"",responableNombre:""};
   }
 
   /* ── Guardar actividad ── */
@@ -327,14 +328,15 @@ export default function TradeApp() {
     const existing=solicitudes.find(s=>s.id===briefEdit);
     const data={
       ...brief,id,
-      stat:briefEdit?(existing?.stat||"pendiente"):"pendiente",
+      stat:briefEdit?(existing?.stat||"pendiente"):(brief.responableId?"en_diseno":"pendiente"),
+      tsAsignado:briefEdit?(existing?.tsAsignado||null):(brief.responableId?new Date().toISOString():null),
       creadoEn:briefEdit?(existing?.creadoEn||now2):now2,
       creadoPor:usuario?.nombre||"",
       updatedAt:now2,
-      responableId:briefEdit?(existing?.responableId||null):null,
-      responableNombre:briefEdit?(existing?.responableNombre||null):null,
+      responableId:briefEdit?(existing?.responableId||null):(brief.responableId||null),
+      responableNombre:briefEdit?(existing?.responableNombre||null):(brief.responableNombre||null),
       hReal:briefEdit?(existing?.hReal||0):0,
-      tsAsignado:briefEdit?(existing?.tsAsignado||null):null,
+
       tsListo:null,tsEntregado:null,
       obs:briefEdit?(existing?.obs||""):"",
     };
@@ -352,7 +354,7 @@ export default function TradeApp() {
       stat:"en_diseno",tsAsignado:new Date().toISOString(),updatedAt:new Date().toISOString(),
     });
     await notifAsignacion({disId,disNombre:dis?.nombre||disId,req:{...req,titulo:req.titulo}});
-    showToast(`📌 Asignado a ${dis?.nombre||disId}`);
+    showToast("📌 Asignado a "+(dis?.nombre||disId));
   };
 
   const marcarListo=async(reqId)=>{
@@ -381,7 +383,7 @@ export default function TradeApp() {
     const req=solicitudes.find(s=>s.id===reqId);if(!req)return;
     await setDoc(doc(db,"trade_solicitudes",reqId),{
       ...req,stat:"en_diseno",tsListo:null,
-      obs:(req.obs||"")+(motivo?`\n[RECHAZADO: ${motivo}]`:""),updatedAt:new Date().toISOString(),
+      obs:(req.obs||"")+(motivo?"\n[RECHAZADO: "+motivo+"]":""),updatedAt:new Date().toISOString(),
     });
     if(req.responableId) await notifRechazo({disId:req.responableId,req,motivo});
     showToast("↩ Enviado de vuelta a diseño");
@@ -443,9 +445,9 @@ export default function TradeApp() {
     inp:{width:"100%",padding:"10px 13px",borderRadius:10,border:"1px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",fontSize:13,outline:"none",boxSizing:"border-box",fontFamily:"inherit"},
     lbl:{fontSize:10,fontWeight:700,color:"#5a7a9a",letterSpacing:".05em",display:"block",marginBottom:5},
     pill:(c,bg)=>({padding:"3px 10px",borderRadius:20,fontSize:10,fontWeight:700,color:c,background:bg,display:"inline-flex",alignItems:"center"}),
-    tabB:(on,c="#00b5b4")=>({padding:"9px 16px",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,borderBottom:on?`3px solid ${c}`:"3px solid transparent",color:on?c:"#8aaabb",background:"transparent",whiteSpace:"nowrap"}),
-    btn:(c)=>({padding:"11px 18px",borderRadius:11,border:"none",background:`linear-gradient(135deg,${c},#1a2f4a)`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}),
-    btnO:(c)=>({padding:"8px 14px",borderRadius:9,border:`1.5px solid ${c}`,background:c+"18",color:c,fontSize:12,fontWeight:700,cursor:"pointer"}),
+    tabB:(on,c="#00b5b4")=>({padding:"9px 16px",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,borderBottom:on?"3px solid "+c:"3px solid transparent",color:on?c:"#8aaabb",background:"transparent",whiteSpace:"nowrap"}),
+    btn:(c)=>({padding:"11px 18px",borderRadius:11,border:"none",background:"linear-gradient(135deg,"+c+",#1a2f4a)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}),
+    btnO:(c)=>({padding:"8px 14px",borderRadius:9,border:"1.5px solid "+c,background:c+"18",color:c,fontSize:12,fontWeight:700,cursor:"pointer"}),
   };
 
   if(!usuario) return <LoginScreen onLogin={handleLogin} loginError={loginError} loginLoading={loginLoading}/>;
@@ -461,14 +463,22 @@ export default function TradeApp() {
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
       <div style={{background:"#1a2f4a",padding:"11px 18px 0",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-          <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#6c5ce7,#1a2f4a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📐</div>
+          <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#1a1a2e,#16213e)",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(255,255,255,.2)"}}>
+              <svg width="24" height="24" viewBox="0 0 52 52" fill="none">
+                <rect x="2" y="2" width="22" height="22" rx="3" fill="#FF6B6B"/>
+                <text x="13" y="18" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold" fontFamily="Arial">Id</text>
+                <rect x="28" y="2" width="22" height="22" rx="3" fill="#F4A261"/>
+                <text x="39" y="18" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold" fontFamily="Arial">Ai</text>
+                <rect x="15" y="28" width="22" height="22" rx="3" fill="#4FC3F7"/>
+                <text x="26" y="44" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold" fontFamily="Arial">Ps</text>
+              </svg>
+            </div>
           <div style={{flex:1}}>
             <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:15,color:"#fff"}}>VEGA · DESIGN TRACKER</div>
             <div style={{fontSize:9,color:"rgba(255,255,255,.4)",letterSpacing:".06em"}}>GESTIÓN DE DISEÑO Y PRODUCCIÓN</div>
           </div>
           <div style={{display:"flex",gap:7,alignItems:"center",flexWrap:"wrap"}}>
-            {canCreate&&<button onClick={()=>{setBriefEdit(null);setBrief(emptyBrief());setBriefModal(true);}}
-              style={{padding:"5px 12px",borderRadius:8,border:"none",background:"#6c5ce7",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:700}}>＋ Nueva actividad</button>}
+
             <NotificacionesBell uId={usuario?.id||""} onVerReq={()=>setTab(0)}/>
             <div style={{padding:"4px 10px",borderRadius:20,background:"rgba(108,92,231,.25)",border:"1px solid rgba(108,92,231,.4)",fontSize:9,color:"#a29bfe",fontWeight:700}}>
               {role==="admin"?"👑":role==="disenador"?"🎨":"👁️"} {uName}
@@ -535,16 +545,25 @@ function LoginScreen({onLogin,loginError,loginLoading}){
   };
 
   return(
-    <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",background:"linear-gradient(160deg,#0f1f35 0%,#1a2f4a 60%,#0d1b2e 100%)",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",background:"linear-gradient(160deg,#0f1f35 0%,#1a2f4a 60%,#0d1b2e 100%)",minHeight:"100vh",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",boxSizing:"border-box"}}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
-      <div style={{width:"100%",maxWidth:400,background:"rgba(255,255,255,0.05)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:22,padding:"36px 32px"}}>
+      <div style={{width:"100%",maxWidth:460,background:"rgba(255,255,255,0.05)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:22,padding:"40px 36px",boxSizing:"border-box"}}>
 
         {/* Logo */}
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>
-          <div style={{width:44,height:44,borderRadius:12,background:"linear-gradient(135deg,#6c5ce7,#a29bfe)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>📐</div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,marginBottom:28,textAlign:"center"}}>
+          <div style={{width:72,height:72,borderRadius:18,background:"linear-gradient(135deg,#1a1a2e,#16213e)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid rgba(255,255,255,.15)",overflow:"hidden"}}>
+            <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+              <rect x="2" y="2" width="22" height="22" rx="3" fill="#FF6B6B"/>
+              <text x="13" y="18" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="Arial">Id</text>
+              <rect x="28" y="2" width="22" height="22" rx="3" fill="#F4A261"/>
+              <text x="39" y="18" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="Arial">Ai</text>
+              <rect x="15" y="28" width="22" height="22" rx="3" fill="#4FC3F7"/>
+              <text x="26" y="44" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="Arial">Ps</text>
+            </svg>
+          </div>
           <div>
-            <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:17,color:"#fff"}}>VEGA · DESIGN TRACKER</div>
-            <div style={{fontSize:10,color:"#8aaabb",letterSpacing:".06em"}}>GESTIÓN DE DISEÑO Y PRODUCCIÓN</div>
+            <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:18,color:"#fff",letterSpacing:".04em"}}>VEGA · DESIGN TRACKER</div>
+            <div style={{fontSize:10,color:"#8aaabb",letterSpacing:".08em",marginTop:3}}>GESTIÓN DE DISEÑO Y PRODUCCIÓN</div>
           </div>
         </div>
 
@@ -618,7 +637,7 @@ function LoginScreen({onLogin,loginError,loginLoading}){
                     placeholder={p.placeholder}
                     value={dni}
                     onChange={e=>setDni(e.target.value)}
-                    style={{...inpS,border:`1.5px solid ${loginError?"rgba(231,76,60,.6)":p.colorLight}`}}
+                    style={{...inpS,border:"1.5px solid "+(loginError?"rgba(231,76,60,.6)":p.colorLight)}}
                     onFocus={e=>e.target.style.borderColor=p.color}
                     onBlur={e=>e.target.style.borderColor=loginError?"rgba(231,76,60,.6)":p.colorLight}
                   />
@@ -629,7 +648,7 @@ function LoginScreen({onLogin,loginError,loginLoading}){
                 </div>
                 <button type="submit" disabled={loginLoading||!dni.trim()}
                   style={{width:"100%",padding:"13px",borderRadius:12,border:"none",
-                    background:dni.trim()?`linear-gradient(135deg,${p.color},${p.color}99)`:"rgba(255,255,255,.1)",
+                    background:dni.trim()?"linear-gradient(135deg,"+p.color+","+p.color+"99)":"rgba(255,255,255,.1)",
                     color:dni.trim()?"#fff":"rgba(255,255,255,.3)",
                     fontSize:14,fontWeight:700,cursor:dni.trim()&&!loginLoading?"pointer":"not-allowed",opacity:loginLoading?.7:1}}>
                   {loginLoading?"Verificando...":p.btnLabel}
@@ -835,13 +854,28 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
           <div><label style={S.lbl}>ÁREA</label><select value={brief.area} onChange={e=>set("area",e.target.value)} style={S.inp}>{areas.map(a=><option key={a}>{a}</option>)}</select></div>
           <div><label style={S.lbl}>DEADLINE <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.deadline} onChange={e=>set("deadline",e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>PRIORIDAD</label><select value={brief.prioridad} onChange={e=>set("prioridad",e.target.value)} style={S.inp}>{["Normal","Media","Alta","Urgente"].map(p=><option key={p}>{p}</option>)}</select></div>
+          <div style={{gridColumn:"1/-1"}}>
+            <label style={S.lbl}>RESPONSABLE <span style={{color:"#8aaabb",fontWeight:400}}>(opcional — asigna directamente al diseñador)</span></label>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              <label onClick={()=>set("responableId","")} style={{display:"flex",alignItems:"center",gap:7,padding:"8px 14px",borderRadius:10,border:"1.5px solid "+(brief.responableId===""?"#6c5ce7":"#e2e8f0"),background:brief.responableId===""?"#f0edff":"#fff",cursor:"pointer",fontSize:12,color:brief.responableId===""?"#6c5ce7":"#5a7a9a",fontWeight:brief.responableId===""?700:400}}>
+                <input type="radio" name="resp" checked={brief.responableId===""} onChange={()=>set("responableId","")} style={{display:"none"}}/>Sin asignar
+              </label>
+              {(config.disenadores||[]).filter(d=>d.activo!==false).map(d=>(
+                <label key={d.id} onClick={()=>{set("responableId",d.id);set("responableNombre",d.nombre);}} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 14px",borderRadius:10,border:"1.5px solid "+(brief.responableId===d.id?"#6c5ce7":"#e2e8f0"),background:brief.responableId===d.id?"#f0edff":"#fff",cursor:"pointer"}}>
+                  <input type="radio" name="resp" checked={brief.responableId===d.id} onChange={()=>{set("responableId",d.id);set("responableNombre",d.nombre);}} style={{display:"none"}}/>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:d.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:700,flexShrink:0}}>{d.iniciales||getIniciales(d.nombre)}</div>
+                  <span style={{fontSize:12,fontWeight:brief.responableId===d.id?700:400,color:brief.responableId===d.id?"#6c5ce7":"#1a2f4a"}}>{d.nombre}</span>
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
       <div style={{...S.card,padding:18,marginBottom:12}}>
         <SectionHeader n={2} label="Tipo de actividad" color="#6c5ce7"/>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7,marginBottom:12}}>
           {tipos.filter(t=>t.activo!==false).map(t=>(
-            <label key={t.id} onClick={()=>set("tipo",t.id)} style={{display:"flex",alignItems:"center",gap:7,padding:"9px 11px",borderRadius:10,border:`1.5px solid ${brief.tipo===t.id?"#6c5ce7":"#e2e8f0"}`,background:brief.tipo===t.id?"#f0edff":"#fff",cursor:"pointer"}}>
+            <label key={t.id} onClick={()=>set("tipo",t.id)} style={{display:"flex",alignItems:"center",gap:7,padding:"9px 11px",borderRadius:10,border:"1.5px solid "+(brief.tipo===t.id?"#6c5ce7":"#e2e8f0"),background:brief.tipo===t.id?"#f0edff":"#fff",cursor:"pointer"}}>
               <input type="radio" name="tipo" checked={brief.tipo===t.id} onChange={()=>set("tipo",t.id)} style={{accentColor:"#6c5ce7"}}/><span style={{fontSize:13}}>{t.e}</span><span style={{fontSize:11,fontWeight:700,color:brief.tipo===t.id?"#6c5ce7":"#1a2f4a"}}>{t.n}</span>
             </label>
           ))}
@@ -853,7 +887,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
         <SectionHeader n={3} label="Materiales y medidas" color="#6c5ce7"/>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>
           {MATERIALES.map(m=>(
-            <label key={m} style={{display:"flex",alignItems:"center",gap:7,padding:"7px 11px",borderRadius:9,border:`1px solid ${brief.materiales.includes(m)?"#6c5ce7":"#e2e8f0"}`,background:brief.materiales.includes(m)?"#f0edff":"#fff",cursor:"pointer",fontSize:11}}>
+            <label key={m} style={{display:"flex",alignItems:"center",gap:7,padding:"7px 11px",borderRadius:9,border:"1px solid "+(brief.materiales.includes(m)?"#6c5ce7":"#e2e8f0"),background:brief.materiales.includes(m)?"#f0edff":"#fff",cursor:"pointer",fontSize:11}}>
               <input type="checkbox" checked={brief.materiales.includes(m)} onChange={()=>toggleMat(m)} style={{accentColor:"#6c5ce7"}}/>{m}
             </label>
           ))}
@@ -866,7 +900,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
           <label style={S.lbl}>TONALIDAD</label>
           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             {TONOS.map(t=>(
-              <label key={t} onClick={()=>set("tono",t)} style={{padding:"6px 13px",borderRadius:20,border:`1.5px solid ${brief.tono===t?"#6c5ce7":"#e2e8f0"}`,background:brief.tono===t?"#f0edff":"#fff",cursor:"pointer",fontSize:11,fontWeight:brief.tono===t?700:400,color:brief.tono===t?"#6c5ce7":"#5a7a9a"}}>
+              <label key={t} onClick={()=>set("tono",t)} style={{padding:"6px 13px",borderRadius:20,border:"1.5px solid "+(brief.tono===t?"#6c5ce7":"#e2e8f0"),background:brief.tono===t?"#f0edff":"#fff",cursor:"pointer",fontSize:11,fontWeight:brief.tono===t?700:400,color:brief.tono===t?"#6c5ce7":"#5a7a9a"}}>
                 <input type="radio" name="tono" checked={brief.tono===t} onChange={()=>set("tono",t)} style={{display:"none"}}/>{t}
               </label>
             ))}
@@ -966,7 +1000,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
                   const c=STAT_C[req.stat]||"#b2bec3";
                   const vencida=req.deadline&&todayStr()>req.deadline&&!["entregado","cancelado"].includes(req.stat);
                   return(
-                    <div key={req.id} style={{...S.card,padding:12,borderLeft:`3px solid ${c}`}}>
+                    <div key={req.id} style={{...S.card,padding:12,borderLeft:"3px solid "+c}}>
                       <div style={{fontSize:11,fontWeight:700,color:"#1a2f4a",marginBottom:4,lineHeight:1.3}}>{req.titulo}</div>
                       <div style={{display:"flex",gap:4,marginBottom:8,flexWrap:"wrap"}}>
                         <span style={{padding:"1px 6px",borderRadius:20,fontSize:9,fontWeight:700,background:c+"18",color:c}}>{tipo?.e||"📌"} {tipo?.n||req.tipo}</span>
@@ -1041,7 +1075,7 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
     <div>
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         {nivelesDisponibles.map(l=>(
-          <button key={l.n} onClick={()=>setDashLvl(l.n)} style={{flex:1,padding:"12px 10px",borderRadius:12,border:`2px solid ${dashLvl===l.n?"#6c5ce7":"#e2e8f0"}`,background:dashLvl===l.n?"#1a2f4a":"#fff",color:dashLvl===l.n?"#fff":"#5a7a9a",cursor:"pointer",textAlign:"center",transition:"all .15s"}}>
+          <button key={l.n} onClick={()=>setDashLvl(l.n)} style={{flex:1,padding:"12px 10px",borderRadius:12,border:"2px solid "+(dashLvl===l.n?"#6c5ce7":"#e2e8f0"),background:dashLvl===l.n?"#1a2f4a":"#fff",color:dashLvl===l.n?"#fff":"#5a7a9a",cursor:"pointer",textAlign:"center",transition:"all .15s"}}>
             <div style={{fontSize:18,marginBottom:4}}>{l.icon}</div>
             <div style={{fontSize:11,fontWeight:800}}>{l.label}</div>
             <div style={{fontSize:9,opacity:.7,marginTop:2}}>{l.sub}</div>
@@ -1053,7 +1087,7 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
         <div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:16}}>
             {[{label:"TOTAL",val:kpis.total,c:"#6c5ce7"},{label:"TERMINADAS",val:kpis.ok,c:"#00b894"},{label:"EN PROCESO",val:kpis.active,c:"#0984e3"},{label:"PENDIENTES",val:kpis.pend,c:"#f6a623"},{label:"CON RETRASO",val:kpis.delay,c:"#e17055"}].map(k=>(
-              <div key={k.label} style={{...S.card,padding:"18px 14px",textAlign:"center",borderTop:`3px solid ${k.c}`}}>
+              <div key={k.label} style={{...S.card,padding:"18px 14px",textAlign:"center",borderTop:"3px solid "+k.c}}>
                 <div style={{fontFamily:"'Syne',sans-serif",fontSize:36,fontWeight:800,color:k.c,lineHeight:1}}>{k.val}</div>
                 <div style={{fontSize:9,color:"#8aaabb",fontWeight:700,marginTop:6,letterSpacing:".05em"}}>{k.label}</div>
               </div>
@@ -1069,7 +1103,7 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
               {kpis.total===0&&<div style={{width:"100%",background:"#e2e8f0"}}/>}
             </div>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              {[{label:`${kpis.ok} Terminadas`,c:"#00b894"},{label:`${kpis.active} En proceso`,c:"#0984e3"},{label:`${kpis.pend} Pendientes`,c:"#f6a623"},{label:`${kpis.delay} Con retraso`,c:"#e17055"}].map(l=>(
+              {[{label:kpis.ok+" Terminadas",c:"#00b894"},{label:kpis.active+" En proceso",c:"#0984e3"},{label:kpis.pend+" Pendientes",c:"#f6a623"},{label:kpis.delay+" Con retraso",c:"#e17055"}].map(l=>(
                 <div key={l.label} style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:l.c}}/><span style={{fontSize:11,color:"#5a7a9a"}}>{l.label}</span></div>
               ))}
             </div>
@@ -1133,7 +1167,7 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
           <div style={{fontSize:11,fontWeight:800,color:"#5a7a9a",letterSpacing:".05em",marginBottom:12}}>HOY — {new Date().toLocaleDateString("es-PE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).toUpperCase()}</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
             {[{label:"En proceso",val:solicitudes.filter(s=>["en_diseno","aprobacion"].includes(s.stat)).length,c:"#6c5ce7",icon:"🎨"},{label:"Vencen hoy",val:solicitudes.filter(s=>s.deadline===todayStr()&&!["entregado","cancelado"].includes(s.stat)).length,c:"#e17055",icon:"⚠️"},{label:"Entregados hoy",val:solicitudes.filter(s=>s.tsEntregado?.slice(0,10)===todayStr()).length,c:"#00b894",icon:"✅"}].map(k=>(
-              <div key={k.label} style={{...S.card,padding:14,borderLeft:`4px solid ${k.c}`}}><div style={{fontSize:9,color:"#8aaabb",fontWeight:700,marginBottom:5}}>{k.label.toUpperCase()}</div><div style={{fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:800,color:k.c}}>{k.val}</div></div>
+              <div key={k.label} style={{...S.card,padding:14,borderLeft:"4px solid "+k.c}}><div style={{fontSize:9,color:"#8aaabb",fontWeight:700,marginBottom:5}}>{k.label.toUpperCase()}</div><div style={{fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:800,color:k.c}}>{k.val}</div></div>
             ))}
           </div>
           <div style={{...S.card,overflow:"hidden"}}>
@@ -1169,7 +1203,7 @@ function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFilt
   const hoy=todayStr();
   const navMes=dir=>{let m=gMonth+dir,y=gYear;if(m<0){m=11;y--;}if(m>11){m=0;y++;}setGMonth(m);setGYear(y);};
   const filtered=useMemo(()=>solicitudes.filter(s=>{
-    const si=s.creadoEn?.slice(0,7);const sd=s.deadline?.slice(0,7);const ym=`${gYear}-${String(gMonth+1).padStart(2,"0")}`;
+    const si=s.creadoEn?.slice(0,7);const sd=s.deadline?.slice(0,7);const ym=gYear+"-"+String(gMonth+1).padStart(2,"0");
     if(si>ym&&sd<ym)return false;if(!s.creadoEn&&!s.deadline)return false;
     if(gFiltResp&&s.responableId!==gFiltResp)return false;
     if(gFiltTipo&&s.tipo!==gFiltTipo)return false;
@@ -1335,7 +1369,7 @@ function DisenaoresPanel({S,dis,config,saveConfig,showNewD,setShowNewD,newDis,se
                 <div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:"#1a2f4a"}}>{d.nombre}</div><div style={{fontSize:10,color:"#8aaabb"}}>{d.rol} · {d.hSem}h/sem</div></div>
                 <div style={{display:"flex",gap:5}}>
                   <button onClick={()=>startEdit(d)} style={{padding:"5px 10px",borderRadius:7,border:"1px solid #a29bfe",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:11,fontWeight:700}}>✏️</button>
-                  <button onClick={()=>toggleDis(d.id)} style={{padding:"5px 10px",borderRadius:7,border:`1px solid ${d.activo!==false?"#fecaca":"#bbf7d0"}`,background:d.activo!==false?"#fff1f2":"#f0fdf4",color:d.activo!==false?"#dc2626":"#16a34a",cursor:"pointer",fontSize:11,fontWeight:700}}>{d.activo!==false?"Pausar":"Activar"}</button>
+                  <button onClick={()=>toggleDis(d.id)} style={{padding:"5px 10px",borderRadius:7,border:"1px solid "+(d.activo!==false?"#fecaca":"#bbf7d0"),background:d.activo!==false?"#fff1f2":"#f0fdf4",color:d.activo!==false?"#dc2626":"#16a34a",cursor:"pointer",fontSize:11,fontWeight:700}}>{d.activo!==false?"Pausar":"Activar"}</button>
                   <button onClick={()=>setDelId(d.id)} style={{padding:"5px 9px",borderRadius:7,border:"1px solid #fecaca",background:"#fff1f2",color:"#dc2626",cursor:"pointer",fontSize:12}}>🗑️</button>
                 </div>
               </div>}
@@ -1361,10 +1395,111 @@ function DisenaoresPanel({S,dis,config,saveConfig,showNewD,setShowNewD,newDis,se
   );
 }
 
+
+/* ══ TAB USUARIOS ═══════════════════════════════════════ */
+function TabUsuarios({S,showToast}){
+  const [usuarios,setUsuarios]=useState([]);
+  const [showForm,setShowForm]=useState(false);
+  const [form,setForm]=useState({nombre:"",dni:"",rol:"disenador"});
+  const [saving,setSaving]=useState(false);
+  const [search,setSearch]=useState("");
+  const ROLES_U=["admin","disenador","viewer"];
+  const ROL_META={
+    admin:   {emoji:"👑", label:"Admin",       color:"#f6a623", bg:"#fff8ec"},
+    disenador:{emoji:"🎨", label:"Team Diseño", color:"#6c5ce7", bg:"#f0eeff"},
+    viewer:  {emoji:"👁️", label:"Visor",        color:"#0984e3", bg:"#e8f4fd"},
+  };
+  useEffect(()=>{
+    const unsub=onSnapshot(collection(db,"trade_users"),snap=>{
+      const arr=[];
+      snap.forEach(d=>arr.push({id:d.id,...d.data()}));
+      arr.sort((a,b)=>{if(a.activo!==b.activo)return b.activo?1:-1;return a.nombre.localeCompare(b.nombre);});
+      setUsuarios(arr);
+    });
+    return()=>unsub();
+  },[]);
+  const handleGuardar=async()=>{
+    if(!form.nombre.trim()||!form.dni.trim()){showToast("⚠ Completa nombre y DNI");return;}
+    if(usuarios.find(u=>u.nombre.toLowerCase()===form.nombre.trim().toLowerCase())){showToast("⚠ Ya existe ese nombre");return;}
+    setSaving(true);
+    try{
+      await addDoc(collection(db,"trade_users"),{nombre:form.nombre.trim(),dni:form.dni.trim(),rol:form.rol,activo:true});
+      setForm({nombre:"",dni:"",rol:"disenador"});setShowForm(false);showToast("✅ Usuario creado");
+    }catch{showToast("❌ Error al guardar");}
+    setSaving(false);
+  };
+  const handleCambiarRol=async(id,rol)=>{
+    try{await updateDoc(doc(db,"trade_users",id),{rol});showToast("✅ Rol actualizado");}
+    catch{showToast("❌ Error");}
+  };
+  const handleToggle=async(id,activo)=>{
+    try{await updateDoc(doc(db,"trade_users",id),{activo:!activo});showToast(activo?"⏸ Desactivado":"✅ Activado");}
+    catch{showToast("❌ Error");}
+  };
+  const filtrados=usuarios.filter(u=>u.nombre.toLowerCase().includes(search.toLowerCase())||(u.rol||"").toLowerCase().includes(search.toLowerCase()));
+  return(
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div>
+          <div style={{fontWeight:800,fontSize:14,color:"#1a2f4a"}}>Gestión de usuarios</div>
+          <div style={{fontSize:11,color:"#8aaabb",marginTop:2}}>{usuarios.filter(u=>u.activo).length} activos · {usuarios.length} totales</div>
+        </div>
+        <button onClick={()=>setShowForm(v=>!v)} style={{padding:"8px 14px",borderRadius:9,border:"none",background:"#6c5ce7",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>{showForm?"✕ Cancelar":"+ Nuevo usuario"}</button>
+      </div>
+      {showForm&&(
+        <div style={{...S.card,padding:18,marginBottom:16,border:"1.5px solid #a29bfe"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div><label style={S.lbl}>NOMBRE COMPLETO</label><input style={S.inp} placeholder="Ej: María Castillo" value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))}/></div>
+            <div><label style={S.lbl}>DNI <span style={{fontSize:9,color:"#8aaabb"}}>(credencial de ingreso)</span></label><input style={S.inp} placeholder="12345678" value={form.dni} onChange={e=>setForm(p=>({...p,dni:e.target.value}))}/></div>
+          </div>
+          <div style={{marginBottom:14}}>
+            <label style={S.lbl}>ROL</label>
+            <div style={{display:"flex",gap:8}}>
+              {ROLES_U.map(r=>{const m=ROL_META[r];return(
+                <button key={r} onClick={()=>setForm(p=>({...p,rol:r}))}
+                  style={{flex:1,padding:"10px 14px",borderRadius:9,border:"1.5px solid "+(form.rol===r?m.color:"#e2e8f0"),background:form.rol===r?m.bg:"#fff",color:form.rol===r?m.color:"#5a7a9a",cursor:"pointer",fontWeight:700,fontSize:12}}>
+                  {m.emoji} {m.label}
+                </button>
+              );})}
+            </div>
+          </div>
+          <button onClick={handleGuardar} disabled={saving} style={{padding:"9px 18px",borderRadius:9,border:"none",background:"#6c5ce7",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12,opacity:saving?.7:1}}>
+            {saving?"Guardando...":"Crear usuario"}
+          </button>
+        </div>
+      )}
+      <input style={{...S.inp,marginBottom:12}} placeholder="🔍 Buscar usuario..." value={search} onChange={e=>setSearch(e.target.value)}/>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {filtrados.map(u=>{
+          const meta=ROL_META[u.rol]||ROL_META.viewer;
+          return(
+            <div key={u.id} style={{...S.card,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,opacity:u.activo?1:.5}}>
+              <div style={{width:40,height:40,borderRadius:10,background:meta.bg,border:"1.5px solid "+meta.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,color:meta.color,flexShrink:0}}>{getIniciales(u.nombre)}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:13,color:"#1a2f4a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.nombre}</div>
+                <div style={{fontSize:11,color:"#8aaabb",marginTop:1}}>DNI: {"•".repeat(4)+u.dni.slice(-3)}</div>
+              </div>
+              <select value={u.rol} onChange={e=>handleCambiarRol(u.id,e.target.value)}
+                style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid "+meta.color+"40",background:meta.bg,color:meta.color,fontWeight:700,fontSize:11,cursor:"pointer",outline:"none"}}>
+                {ROLES_U.map(r=><option key={r} value={r}>{ROL_META[r].emoji} {ROL_META[r].label}</option>)}
+              </select>
+              <button onClick={()=>handleToggle(u.id,u.activo)}
+                style={{padding:"6px 12px",borderRadius:8,border:"1px solid "+(u.activo?"#fecaca":"#bbf7d0"),background:u.activo?"#fff1f2":"#f0fdf4",color:u.activo?"#dc2626":"#16a34a",cursor:"pointer",fontWeight:700,fontSize:11,whiteSpace:"nowrap"}}>
+                {u.activo?"Pausar":"Activar"}
+              </button>
+            </div>
+          );
+        })}
+        {filtrados.length===0&&<div style={{padding:"28px",textAlign:"center",color:"#b2bec3",fontSize:12,borderRadius:10,border:"1.5px dashed #e2e8f0"}}>{search?"Sin resultados":"Sin usuarios registrados"}</div>}
+      </div>
+    </div>
+  );
+}
+
 /* ══ TAB CONFIG — SIN TAB USUARIOS ═════════════════════ */
 function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNewTipo,newDis,setNewDis,showNewT,setShowNewT,showNewD,setShowNewD,showToast}){
-  /* Solo 3 tabs: Tipos · Diseñadores · Áreas (Usuarios eliminado) */
-  const tabs=["📦 Tipos de trabajo","👥 Diseñadores","📐 Áreas"];
+  /* 4 tabs: Tipos · Diseñadores · Áreas · Usuarios */
+  const tabs=["📦 Tipos de trabajo","👥 Diseñadores","📐 Áreas","👤 Usuarios"];
   const tipos=config.tipos||[];
   const dis=config.disenadores||[];
   const areas=config.areas||AREAS_DEFAULT;
@@ -1390,7 +1525,7 @@ function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNe
       <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
         {tabs.map((l,i)=>(
           <button key={i} onClick={()=>setCfgTab(i)}
-            style={{padding:"9px 16px",borderRadius:10,border:`1.5px solid ${cfgTab===i?"#6c5ce7":"#e2e8f0"}`,background:cfgTab===i?"#1a2f4a":"#fff",color:cfgTab===i?"#fff":"#5a7a9a",cursor:"pointer",fontWeight:700,fontSize:12}}>
+            style={{padding:"9px 16px",borderRadius:10,border:"1.5px solid "+(cfgTab===i?"#6c5ce7":"#e2e8f0"),background:cfgTab===i?"#1a2f4a":"#fff",color:cfgTab===i?"#fff":"#5a7a9a",cursor:"pointer",fontWeight:700,fontSize:12}}>
             {l}
           </button>
         ))}
@@ -1417,7 +1552,7 @@ function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNe
               <div key={t.id} style={{...S.card,padding:"11px 14px",display:"flex",alignItems:"center",gap:10,opacity:t.activo!==false?1:.5}}>
                 <span style={{fontSize:18}}>{t.e}</span>
                 <div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:"#1a2f4a"}}>{t.n}</div><div style={{fontSize:10,color:"#8aaabb"}}>HH est: {t.hEst}h</div></div>
-                <button onClick={()=>toggleTipo(t.id)} style={{padding:"4px 10px",borderRadius:7,border:`1px solid ${t.activo!==false?"#fecaca":"#bbf7d0"}`,background:t.activo!==false?"#fff1f2":"#f0fdf4",color:t.activo!==false?"#dc2626":"#16a34a",cursor:"pointer",fontSize:10,fontWeight:700}}>{t.activo!==false?"Ocultar":"Activar"}</button>
+                <button onClick={()=>toggleTipo(t.id)} style={{padding:"4px 10px",borderRadius:7,border:"1px solid "+(t.activo!==false?"#fecaca":"#bbf7d0"),background:t.activo!==false?"#fff1f2":"#f0fdf4",color:t.activo!==false?"#dc2626":"#16a34a",cursor:"pointer",fontSize:10,fontWeight:700}}>{t.activo!==false?"Ocultar":"Activar"}</button>
               </div>
             ))}
           </div>
@@ -1425,6 +1560,7 @@ function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNe
       )}
 
       {cfgTab===1&&<DisenaoresPanel S={S} dis={dis} config={config} saveConfig={saveConfig} showNewD={showNewD} setShowNewD={setShowNewD} newDis={newDis} setNewDis={setNewDis} showToast={showToast}/>}
+      {cfgTab===3&&<TabUsuarios S={S} showToast={showToast}/>}
 
       {cfgTab===2&&(
         <div>
