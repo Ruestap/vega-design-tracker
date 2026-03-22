@@ -324,6 +324,35 @@ function getIniciales(nombre) {
 
 function diasEnMes(y,m){ return new Date(y,m+1,0).getDate(); }
 
+/* ══ NOTIFICACIONES WA + EMAIL ══════════════════════════ */
+const AREAS_PRIORITARIAS = ["Trade Marketing","Marketing","Marketing Digital","Ecommerce","Servicio al Cliente"];
+
+function abrirWA(telefono, mensaje) {
+  if(!telefono) return;
+  const tel = telefono.replace(/\D/g,"");
+  const url = "https://wa.me/"+tel+"?text="+encodeURIComponent(mensaje);
+  window.open(url,"_blank");
+}
+
+function abrirEmail(emails, asunto, cuerpo) {
+  if(!emails||emails.length===0) return;
+  const to = Array.isArray(emails)?emails.join(","):emails;
+  const url = "mailto:"+to+"?subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpo);
+  window.location.href = url;
+}
+
+function buildMsgAsignacion(req, disNombre) {
+  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
+}
+
+function buildMsgNuevaOtraArea(req, uName) {
+  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
+}
+
+function buildMsgRecordatorio(req, disNombre) {
+  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
+}
+
 /* ══ APP PRINCIPAL ══════════════════════════════════════ */
 export default function TradeApp() {
   const now = new Date();
@@ -343,6 +372,7 @@ export default function TradeApp() {
 
   /* ── nav ── */
   const [tab, setTab] = useState(0);
+  const [panelNotif, setPanelNotif] = useState(null);
 
   /* ── data Firebase ── */
   const [solicitudes, setSolicitudes] = useState([]);
@@ -498,6 +528,31 @@ export default function TradeApp() {
       obs:briefEdit?(existing?.obs||""):"",
     };
     await setDoc(doc(db,"trade_solicitudes",id),data);
+
+    if(!briefEdit) {
+      const esPrioritaria = AREAS_PRIORITARIAS.includes(data.area||"");
+      if(data.responableId && esPrioritaria) {
+        // Caso 1: área prioritaria CON diseñador asignado → notificar diseñador
+        const dis = tradeUsers.find(u=>u.id===data.responableId);
+        if(dis) {
+          const msg = buildMsgAsignacion(data, dis.nombre);
+          const asunto = "Nueva actividad asignada: "+data.titulo;
+          const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+data.titulo+"\nEntrega: "+(data.fechaEntrega||"—")+" "+(data.horaCorte||"")+"\nÁrea: "+(data.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app";
+          if(dis.telefono) setTimeout(()=>abrirWA(dis.telefono, msg), 500);
+          if(dis.email) setTimeout(()=>abrirEmail([dis.email], asunto, cuerpoEmail), 1200);
+        }
+      } else if(!data.responableId && !esPrioritaria) {
+        // Caso 2: otras áreas SIN diseñador → notificar admins de Trade por email
+        const admins = tradeUsers.filter(u=>u.rol==="admin" && u.activo!==false && u.email);
+        if(admins.length>0) {
+          const emails = admins.map(u=>u.email);
+          const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
+          const cuerpo = "Nueva solicitud recibida de "+data.area+":\n\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nVer en: https://vega-design-tracker.vercel.app";
+          setTimeout(()=>abrirEmail(emails, asunto, cuerpo), 500);
+        }
+      }
+    }
+
     showToast(briefEdit?"✏️ Actividad actualizada":"✅ Actividad creada");
     setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());
   };
@@ -511,7 +566,23 @@ export default function TradeApp() {
       stat:"en_diseno",tsAsignado:new Date().toISOString(),updatedAt:new Date().toISOString(),
     });
     await notifAsignacion({disId,disNombre:dis?.nombre||disId,req:{...req,titulo:req.titulo}});
+    // Notificar al diseñador por WA y email
     showToast("📌 Asignado a "+(dis?.nombre||disId));
+    // Mostrar panel de notificación
+    if(dis) {
+      const msg = buildMsgAsignacion({...req}, dis.nombre);
+      const asunto = "Nueva actividad asignada: "+req.titulo;
+      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||req.deadline||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app";
+      setPanelNotif({
+        nombre: dis.nombre,
+        telefono: dis.telefono||"",
+        email: dis.email||"",
+        msgWA: msg,
+        asunto,
+        cuerpoEmail,
+        titulo: req.titulo,
+      });
+    }
   };
 
   const marcarListo=async(reqId)=>{
@@ -668,6 +739,42 @@ export default function TradeApp() {
 
       {briefModal&&<BriefModal S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} onClose={()=>{setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());}} isAdmin={isAdmin} editMode={!!briefEdit} solicitudes={solicitudes}/>}
       {toast&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:"#1a2f4a",color:"#fff",padding:"11px 22px",borderRadius:24,fontSize:13,fontWeight:700,zIndex:99,boxShadow:"0 6px 24px rgba(0,0,0,.25)",whiteSpace:"nowrap"}}>{toast}</div>}
+
+      {panelNotif&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(26,47,74,.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:60,backdropFilter:"blur(4px)"}}>
+          <div style={{...S.card,padding:24,width:"90%",maxWidth:420}}>
+            <div style={{fontWeight:800,fontSize:15,color:"#1a2f4a",marginBottom:4}}>Notificar al diseñador</div>
+            <div style={{fontSize:12,color:"#5a7a9a",marginBottom:16}}>Tarea asignada a <strong>{panelNotif.nombre}</strong></div>
+            <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:12,fontSize:11,color:"#1a2f4a",marginBottom:16,whiteSpace:"pre-wrap",maxHeight:120,overflow:"auto"}}>{panelNotif.msgWA}</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+              {panelNotif.telefono&&(
+                <button onClick={()=>abrirWA(panelNotif.telefono, panelNotif.msgWA)}
+                  style={{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",borderRadius:11,border:"1.5px solid #00b894",background:"#e8faf5",color:"#00695c",cursor:"pointer",fontWeight:700,fontSize:13}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#00b894"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                  WhatsApp directo a {panelNotif.nombre}
+                </button>
+              )}
+              <button onClick={()=>abrirWA("", panelNotif.msgWA)}
+                style={{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",borderRadius:11,border:"1.5px solid #25D366",background:"#f0fff8",color:"#128C7E",cursor:"pointer",fontWeight:700,fontSize:13}}
+                title="Reenviar al grupo CARTELERÍA">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                Enviar al grupo CARTELERÍA
+              </button>
+              {panelNotif.email&&(
+                <button onClick={()=>abrirEmail([panelNotif.email], panelNotif.asunto, panelNotif.cuerpoEmail)}
+                  style={{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",borderRadius:11,border:"1.5px solid #0984e3",background:"#e8f4fd",color:"#0c447c",cursor:"pointer",fontWeight:700,fontSize:13}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0984e3" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+                  Email a {panelNotif.nombre}
+                </button>
+              )}
+            </div>
+            <button onClick={()=>setPanelNotif(null)}
+              style={{width:"100%",padding:"10px",borderRadius:10,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontWeight:700,fontSize:13}}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
