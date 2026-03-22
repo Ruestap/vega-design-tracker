@@ -402,8 +402,8 @@ export default function TradeApp() {
   },[]);
 
   const saveConfig=useCallback(async(overrides={})=>{
-    const newCfg={...config,...overrides};
-    await setDoc(doc(db,"trade_config","app"),{...newCfg,updatedAt:new Date().toISOString()});
+    const {disenadores:_removed,...cfgBase}={...config,...overrides};
+    await setDoc(doc(db,"trade_config","app"),{...cfgBase,updatedAt:new Date().toISOString()});
   },[config]);
 
   const showToast=msg=>{
@@ -557,18 +557,14 @@ export default function TradeApp() {
     setBriefModal(true);
   };
 
-  /* ── Helper: resolver responsable desde trade_users O config.disenadores ── */
+  /* ── Helper: resolver responsable desde trade_users ── */
   const resolverResp = useCallback((responableId, responableNombre)=>{
     if(!responableId && !responableNombre) return null;
-    // Buscar en trade_users primero
     const u = tradeUsers.find(u=>u.id===responableId || u.nombre===responableNombre);
     if(u) return {id:u.id, nombre:u.nombre, iniciales:getIniciales(u.nombre), color:u.color||"#6c5ce7", email:u.email||"", telefono:u.telefono||""};
-    // Fallback a config.disenadores
-    const d = (config.disenadores||[]).find(d=>d.id===responableId || d.nombre===responableNombre);
-    if(d) return {id:d.id, nombre:d.nombre, iniciales:d.iniciales||getIniciales(d.nombre), color:d.color||"#6c5ce7", email:"", telefono:""};
-    if(responableNombre) return {id:responableId, nombre:responableNombre, iniciales:getIniciales(responableNombre), color:"#6c5ce7", email:"", telefono:""};
+    if(responableNombre) return {id:responableId||"", nombre:responableNombre, iniciales:getIniciales(responableNombre), color:"#6c5ce7", email:"", telefono:""};
     return null;
-  },[tradeUsers, config.disenadores]);
+  },[tradeUsers]);
 
   /* ── Computed ── */
   const role=usuario?.rol||null;
@@ -889,7 +885,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
   const [rejectMotivo,setRejectMotivo]=useState("");
   const [delModal,setDelModal]=useState(null);
   const tipos=config.tipos||[];
-  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
+  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[];
 
   return(
     <div>
@@ -1051,7 +1047,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
           <div style={{...S.card,padding:26,width:"90%",maxWidth:400}}>
             <div style={{fontWeight:800,fontSize:15,color:"#1a2f4a",marginBottom:4}}>Asignar responsable</div>
             <div style={{fontSize:12,color:"#5a7a9a",marginBottom:16}}>{assignModal.titulo}</div>
-            {(tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[])).map(d=>(
+            {(tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[]).map(d=>(
               <button key={d.id} onClick={()=>{asignarDis(assignModal.id,d.id);setAssignModal(null);}}
                 style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"11px 14px",borderRadius:11,border:"1px solid #e2e8f0",background:"#fff",cursor:"pointer",marginBottom:7,textAlign:"left"}}>
                 <div style={{width:32,height:32,borderRadius:"50%",background:d.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",fontWeight:700}}>{d.iniciales||getIniciales(d.nombre)}</div>
@@ -1109,7 +1105,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
     });
     return()=>unsub();
   },[]);
-  const disenadoresList = disenadoresUsers.length>0 ? disenadoresUsers : (config.disenadores||[]).filter(d=>d.activo!==false);
+  const disenadoresList = disenadoresUsers.length>0 ? disenadoresUsers : [].filter(d=>d.activo!==false);
   return(
     <div style={{maxWidth:"100%"}}>
       <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:17,color:"#1a2f4a",marginBottom:3}}>{editMode?"Editar actividad":"Nueva actividad de diseño"}</div>
@@ -1236,7 +1232,7 @@ function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,ed
 
 /* ══ TAB KANBAN ════════════════════════════════════════ */
 function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarListo,aprobarEntrega,rechazarEntrega,uName,showToast,resolverResp,tradeUsers}){
-  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
+  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[];
   const tipos=config.tipos||[];
   const [assignModal,setAssignModal]=useState(null);
   const [rejectModal,setRejectModal]=useState(null);
@@ -1353,7 +1349,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
 
 /* ══ TAB DASHBOARD ══════════════════════════════════════ */
 function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,isDisenador}){
-  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
+  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[];
   const tipos=config.tipos||[];
   const hoy=todayStr();
   const vencen7=solicitudes.filter(s=>s.deadline&&!["entregado","cancelado"].includes(s.stat)&&new Date(s.deadline)>=new Date(hoy)&&new Date(s.deadline)-new Date(hoy)<=7*86400000);
@@ -1488,7 +1484,7 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
 /* ══ GANTT DIARIO ════════════════════════════════════════ */
 function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,showResp,tradeUsers}){
   const dias=diasEnMes(gYear,gMonth);
-   const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
+   const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[];
   const tipos=config.tipos||[];
   const hoy=todayStr();
   const navMes=dir=>{let m=gMonth+dir,y=gYear;if(m<0){m=11;y--;}if(m>11){m=0;y++;}setGMonth(m);setGYear(y);};
