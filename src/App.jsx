@@ -337,20 +337,21 @@ function abrirWA(telefono, mensaje) {
 function abrirEmail(emails, asunto, cuerpo) {
   if(!emails||emails.length===0) return;
   const to = Array.isArray(emails)?emails.join(","):emails;
-  const url = "mailto:"+to+"?subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpo);
-  window.location.href = url;
+  // Outlook Web (funciona con @corporacionvega.pe y @grupovega.pe)
+  const outlookUrl = "https://outlook.office.com/mail/deeplink/compose?to="+encodeURIComponent(to)+"&subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpo);
+  window.open(outlookUrl,"_blank","noopener");
 }
 
 function buildMsgAsignacion(req, disNombre) {
-  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
+  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 function buildMsgNuevaOtraArea(req, uName) {
-  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
+  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 function buildMsgRecordatorio(req, disNombre) {
-  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
+  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 /* ══ APP PRINCIPAL ══════════════════════════════════════ */
@@ -359,7 +360,14 @@ export default function TradeApp() {
 
   /* ── auth ── */
   const [usuario, setUsuario] = useState(() => {
-    try { const s=localStorage.getItem(SESSION_KEY); return s?JSON.parse(s):null; }
+    try {
+      if(window.location.search.includes("logout=1")){
+        localStorage.removeItem(SESSION_KEY);
+        window.history.replaceState({},"",window.location.pathname);
+        return null;
+      }
+      const s=localStorage.getItem(SESSION_KEY); return s?JSON.parse(s):null;
+    }
     catch { return null; }
   });
   const [loginError,   setLoginError]   = useState("");
@@ -515,7 +523,7 @@ export default function TradeApp() {
       horaInicio:brief.horaInicio||"",
       fechaEntrega:brief.fechaEntrega||"",
       horaCorte:brief.horaCorte||"",
-      stat:briefEdit?(existing?.stat||"pendiente"):(brief.responableId?"en_diseno":"pendiente"),
+      stat:briefEdit?(existing?.stat||"pendiente"):"pendiente",
       tsAsignado:briefEdit?(existing?.tsAsignado||null):(brief.responableId?new Date().toISOString():null),
       creadoEn:briefEdit?(existing?.creadoEn||now2):now2,
       creadoPor:usuario?.nombre||"",
@@ -537,7 +545,7 @@ export default function TradeApp() {
         if(dis) {
           const msg = buildMsgAsignacion(data, dis.nombre);
           const asunto = "Nueva actividad asignada: "+data.titulo;
-          const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+data.titulo+"\nEntrega: "+(data.fechaEntrega||"—")+" "+(data.horaCorte||"")+"\nÁrea: "+(data.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app";
+          const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+data.titulo+"\nEntrega: "+(data.fechaEntrega||"—")+" "+(data.horaCorte||"")+"\nÁrea: "+(data.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
           if(dis.telefono) setTimeout(()=>abrirWA(dis.telefono, msg), 500);
           if(dis.email) setTimeout(()=>abrirEmail([dis.email], asunto, cuerpoEmail), 1200);
         }
@@ -547,7 +555,7 @@ export default function TradeApp() {
         if(admins.length>0) {
           const emails = admins.map(u=>u.email);
           const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
-          const cuerpo = "Nueva solicitud recibida de "+data.area+":\n\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nVer en: https://vega-design-tracker.vercel.app";
+          const cuerpo = "Nueva solicitud recibida de "+data.area+":\n\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
           setTimeout(()=>abrirEmail(emails, asunto, cuerpo), 500);
         }
       }
@@ -563,7 +571,7 @@ export default function TradeApp() {
     const dis=tradeUsers.find(d=>d.id===disId)||{nombre:disId};
     await setDoc(doc(db,"trade_solicitudes",reqId),{
       ...req,responableId:disId,responableNombre:dis?.nombre||disId,
-      stat:"en_diseno",tsAsignado:new Date().toISOString(),updatedAt:new Date().toISOString(),
+      stat:"pendiente",tsAsignado:null,updatedAt:new Date().toISOString(),
     });
     await notifAsignacion({disId,disNombre:dis?.nombre||disId,req:{...req,titulo:req.titulo}});
     // Notificar al diseñador por WA y email
@@ -572,7 +580,7 @@ export default function TradeApp() {
     if(dis) {
       const msg = buildMsgAsignacion({...req}, dis.nombre);
       const asunto = "Nueva actividad asignada: "+req.titulo;
-      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||req.deadline||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app";
+      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||req.deadline||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
       setPanelNotif({
         nombre: dis.nombre,
         telefono: dis.telefono||"",
@@ -583,6 +591,14 @@ export default function TradeApp() {
         titulo: req.titulo,
       });
     }
+  };
+
+  const iniciarTrabajo=async(reqId)=>{
+    const req=solicitudes.find(s=>s.id===reqId);if(!req)return;
+    await setDoc(doc(db,"trade_solicitudes",reqId),{
+      ...req,stat:"en_diseno",tsAsignado:new Date().toISOString(),updatedAt:new Date().toISOString(),
+    });
+    showToast("▶ Trabajo iniciado");
   };
 
   const marcarListo=async(reqId)=>{
@@ -730,9 +746,9 @@ export default function TradeApp() {
       </div>
 
       <div style={{padding:"16px 24px",maxWidth:"100%",boxSizing:"border-box"}}>
-        {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
+        {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName} resolverResp={resolverResp} tradeUsers={tradeUsers} iniciarTrabajo={iniciarTrabajo}/>}
         {tab===1&&isAdmin&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes}/>}
-        {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
+        {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} iniciarTrabajo={iniciarTrabajo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
         {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador} tradeUsers={tradeUsers}/>}
         {tab===4&&isAdmin&&<TabConfig S={S} config={config} setConfig={setConfig} saveConfig={saveConfig} cfgTab={cfgTab} setCfgTab={setCfgTab} newTipo={newTipo} setNewTipo={setNewTipo} newDis={newDis} setNewDis={setNewDis} showNewT={showNewT} setShowNewT={setShowNewT} showNewD={showNewD} setShowNewD={setShowNewD} showToast={showToast}/>}
       </div>
@@ -993,11 +1009,12 @@ function LoginScreen({onLogin,loginError,loginLoading}){
 }
 
 /* ══ TAB ACTIVIDADES ════════════════════════════════════ */
-function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo,fResp,setFResp,busq,setBusq,isAdmin,isDisenador,asignarDis,aprobarEntrega,rechazarEntrega,eliminarSolicitud,editarActividad,showToast,uName,resolverResp,tradeUsers}){
+function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo,fResp,setFResp,busq,setBusq,isAdmin,isDisenador,asignarDis,aprobarEntrega,rechazarEntrega,eliminarSolicitud,editarActividad,showToast,uName,resolverResp,tradeUsers,iniciarTrabajo}){
   const [assignModal,setAssignModal]=useState(null);
   const [rejectModal,setRejectModal]=useState(null);
   const [rejectMotivo,setRejectMotivo]=useState("");
   const [delModal,setDelModal]=useState(null);
+  const [verBrief,setVerBrief]=useState(null);
   const tipos=config.tipos||[];
   const dis=(tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false);
 
@@ -1060,9 +1077,10 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                 const hoy=todayStr();
                 const vencida=req.deadline&&hoy>req.deadline&&!["entregado","cancelado"].includes(req.stat);
                 return(
-                  <tr key={req.id} style={{borderBottom:"1px solid #f5f7fa"}}
+                  <tr key={req.id} style={{borderBottom:"1px solid #f5f7fa",cursor:"pointer"}}
                     onMouseEnter={e=>e.currentTarget.style.background="#f8fcff"}
-                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                    onClick={e=>{if(e.target.tagName!=="BUTTON"&&e.target.tagName!=="SELECT")setVerBrief(req);}}>
                       <td style={{padding:"10px 8px",whiteSpace:"nowrap"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:10,background:c+"12",border:"1px solid "+c+"30",width:"fit-content"}}>
                         <span style={{fontSize:15}}>{tipo?.e||"📌"}</span>
@@ -1138,12 +1156,14 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
 
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
                       <div style={{display:"flex",flexDirection:"row",gap:4,alignItems:"center"}}>
+                        <button onClick={()=>setVerBrief(req)} style={{padding:"4px 8px",borderRadius:7,border:"1px solid #c8d8e8",background:"#f8fafc",color:"#5a7a9a",cursor:"pointer",fontSize:10,fontWeight:700}} title="Ver brief">👁</button>
                         {isAdmin&&<button onClick={()=>editarActividad(req)} style={{padding:"4px 8px",borderRadius:7,border:"1px solid #a29bfe",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:10,fontWeight:700}}>✏️</button>}
                         {isAdmin&&req.stat==="pendiente"&&<button onClick={()=>setAssignModal(req)} style={{padding:"4px 9px",borderRadius:7,border:"1px solid #6c5ce7",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:10,fontWeight:700}}>Asignar</button>}
                         {isAdmin&&req.stat==="aprobacion"&&<>
                           <button onClick={()=>aprobarEntrega(req.id)} style={{padding:"4px 8px",borderRadius:7,border:"none",background:"#00b894",color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>✓</button>
                           <button onClick={()=>setRejectModal(req)} style={{padding:"4px 8px",borderRadius:7,border:"none",background:"#ffeae6",color:"#dc2626",cursor:"pointer",fontSize:10,fontWeight:700}}>✕</button>
                         </>}
+                        {isDisenador&&req.stat==="pendiente"&&req.responableNombre===uName&&<button onClick={()=>iniciarTrabajo&&iniciarTrabajo(req.id)} style={{padding:"4px 9px",borderRadius:7,border:"none",background:"#f6a623",color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>▶ Iniciar</button>}
                         {isDisenador&&req.stat==="en_diseno"&&req.responableNombre===uName&&<button onClick={()=>marcarListo&&marcarListo(req.id)} style={{padding:"4px 9px",borderRadius:7,border:"none",background:"#6c5ce7",color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>Listo →</button>}
                         {isAdmin&&<button onClick={()=>setDelModal(req)} style={{padding:"4px 8px",borderRadius:7,border:"1px solid #fecaca",background:"#fff1f2",color:"#dc2626",cursor:"pointer",fontSize:10}}>🗑️</button>}
                       </div>
@@ -1182,6 +1202,43 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>{rechazarEntrega(rejectModal.id,rejectMotivo);setRejectModal(null);setRejectMotivo("");}} style={{flex:1,padding:"11px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#e17055,#1a2f4a)",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:13}}>Enviar de vuelta</button>
               <button onClick={()=>{setRejectModal(null);setRejectMotivo("");}} style={{padding:"11px 16px",borderRadius:10,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:13}}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {verBrief&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(26,47,74,.6)",display:"flex",alignItems:"flex-start",justifyContent:"center",zIndex:50,backdropFilter:"blur(4px)",padding:"20px 16px",overflowY:"auto"}}>
+          <div style={{...S.card,width:"100%",maxWidth:640,padding:0}}>
+            <div style={{padding:"14px 20px",borderBottom:"1px solid #f0f4f8",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{fontWeight:800,fontSize:14,color:"#1a2f4a"}}>{verBrief.titulo}</div>
+              <button onClick={()=>setVerBrief(null)} style={{padding:"5px 12px",borderRadius:8,border:"1px solid #c8d8e8",background:"#fff",cursor:"pointer",fontSize:12}}>✕ Cerrar</button>
+            </div>
+            <div style={{padding:20,maxHeight:"75vh",overflowY:"auto"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+                {[
+                  {l:"Área",v:verBrief.area||"—"},
+                  {l:"Tipo",v:verBrief.tipo||"—"},
+                  {l:"Prioridad",v:verBrief.prioridad||"—"},
+                  {l:"Solicitante",v:verBrief.creadoPor||"—"},
+                  {l:"Fecha inicio",v:verBrief.fechaInicio||"—"},
+                  {l:"Fecha entrega",v:verBrief.fechaEntrega||verBrief.deadline||"—"},
+                  {l:"Hora de corte",v:verBrief.horaCorte||"—"},
+                  {l:"HH estimadas",v:(verBrief.hEst||"—")+"h"},
+                ].map(f=>(
+                  <div key={f.l} style={{background:"#f8fafc",borderRadius:9,padding:"10px 12px",border:"1px solid #e2e8f0"}}>
+                    <div style={{fontSize:9,color:"#8aaabb",fontWeight:700,marginBottom:3}}>{f.l.toUpperCase()}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:"#1a2f4a"}}>{f.v}</div>
+                  </div>
+                ))}
+              </div>
+              {verBrief.objetivo&&<div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:"#5a7a9a",marginBottom:4}}>OBJETIVO</div><div style={{fontSize:12,color:"#1a2f4a",background:"#f8fafc",padding:"10px 12px",borderRadius:9,border:"1px solid #e2e8f0"}}>{verBrief.objetivo}</div></div>}
+              {verBrief.mensaje&&<div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:"#5a7a9a",marginBottom:4}}>MENSAJE PRINCIPAL</div><div style={{fontSize:12,color:"#1a2f4a",background:"#f8fafc",padding:"10px 12px",borderRadius:9,border:"1px solid #e2e8f0"}}>{verBrief.mensaje}</div></div>}
+              {verBrief.materiales&&verBrief.materiales.length>0&&<div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:"#5a7a9a",marginBottom:6}}>MATERIALES</div><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{verBrief.materiales.map(m=><span key={m} style={{padding:"3px 9px",borderRadius:20,background:"#f0edff",color:"#6c5ce7",fontSize:11,fontWeight:600}}>{m}</span>)}</div></div>}
+              {verBrief.medidas&&<div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:"#5a7a9a",marginBottom:4}}>MEDIDAS</div><div style={{fontSize:12,color:"#1a2f4a",background:"#f8fafc",padding:"10px 12px",borderRadius:9,border:"1px solid #e2e8f0"}}>{verBrief.medidas}</div></div>}
+              {verBrief.restricciones&&<div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:"#e17055",marginBottom:4}}>RESTRICCIONES</div><div style={{fontSize:12,color:"#1a2f4a",background:"#fff1ee",padding:"10px 12px",borderRadius:9,border:"1px solid #fecdc7"}}>{verBrief.restricciones}</div></div>}
+              {verBrief.comentarios&&<div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:"#5a7a9a",marginBottom:4}}>COMENTARIOS</div><div style={{fontSize:12,color:"#1a2f4a",background:"#f8fafc",padding:"10px 12px",borderRadius:9,border:"1px solid #e2e8f0"}}>{verBrief.comentarios}</div></div>}
+              {verBrief.obs&&<div style={{padding:"10px 12px",borderRadius:9,background:"#fff8ec",border:"1px solid #fde68a"}}><div style={{fontSize:10,fontWeight:700,color:"#92400e",marginBottom:3}}>OBSERVACIÓN</div><div style={{fontSize:12,color:"#78350f"}}>{verBrief.obs}</div></div>}
             </div>
           </div>
         </div>
@@ -1345,7 +1402,7 @@ function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,ed
 }
 
 /* ══ TAB KANBAN ════════════════════════════════════════ */
-function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarListo,aprobarEntrega,rechazarEntrega,uName,showToast,resolverResp,tradeUsers}){
+function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarListo,iniciarTrabajo,aprobarEntrega,rechazarEntrega,uName,showToast,resolverResp,tradeUsers}){
   const dis=(tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false);
   const tipos=config.tipos||[];
   const [assignModal,setAssignModal]=useState(null);
@@ -1414,6 +1471,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
                       <div style={{fontSize:9,color:vencida?"#e17055":"#8aaabb",fontWeight:vencida?700:400,marginBottom:8}}>Deadline: {req.deadline||"—"}</div>
                       <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                         {isAdmin&&req.stat==="pendiente"&&<button onClick={()=>setAssignModal(req)} style={{flex:1,padding:"5px 8px",borderRadius:7,border:"1px solid #6c5ce7",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:10,fontWeight:700}}>Asignar</button>}
+                        {isDisenador&&req.stat==="pendiente"&&req.responableNombre===uName&&<button onClick={()=>iniciarTrabajo(req.id)} style={{flex:1,padding:"5px 8px",borderRadius:7,border:"none",background:"#f6a623",color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>▶ Iniciar</button>}
                         {isDisenador&&req.stat==="en_diseno"&&req.responableNombre===uName&&<button onClick={()=>marcarListo(req.id)} style={{flex:1,padding:"5px 8px",borderRadius:7,border:"none",background:"#6c5ce7",color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>Listo →</button>}
                         {isAdmin&&req.stat==="aprobacion"&&<>
                           <button onClick={()=>aprobarEntrega(req.id)} style={{flex:1,padding:"5px 7px",borderRadius:7,border:"none",background:"#00b894",color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>✓</button>
