@@ -920,7 +920,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                             await setDoc(doc(db,"trade_solicitudes",req.id),{...req,stat:e.target.value,updatedAt:new Date().toISOString()});
                             showToast("✅ Estado actualizado");
                           }}
-                          style={{padding:"3px 9px",borderRadius:20,border:"none",background:c+"18",color:c,fontWeight:700,fontSize:10,cursor:"pointer",outline:"none",whiteSpace:"nowrap"}}>
+                          style={{padding:"3px 9px",borderRadius:20,border:"none",background:c+"18",color:c,fontWeight:700,fontSize:10,cursor:"pointer",outline:"none",whiteSpace:"nowrap",fontFamily:"'DM Sans',system-ui,sans-serif",letterSpacing:".01em",appearance:"none",WebkitAppearance:"none"}}>
                           {Object.entries(STAT_L).map(([k,v])=><option key={k} value={k}>{v}</option>)}
                         </select>
                         :<span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:c,background:c+"18",whiteSpace:"nowrap"}}>{STAT_L[req.stat]||req.stat}</span>}
