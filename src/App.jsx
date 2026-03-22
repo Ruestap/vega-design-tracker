@@ -337,15 +337,15 @@ function abrirWA(telefono, mensaje) {
 function abrirEmail(emails, asunto, cuerpo) {
   if(!emails||emails.length===0) return;
   const to = Array.isArray(emails)?emails.join(","):emails;
-  // Outlook 365 Web — funciona con dominios corporativos sin abrir cliente local
-  const url = "https://outlook.office365.com/mail/deeplink/compose?to="+encodeURIComponent(to)+"&subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpo);
+  // Convertir el link del app en HTML clickeable
+  const cuerpoHtml = cuerpo
+    .replace(/https:\/\/vega-design-tracker\.vercel\.app\?logout=1/g,
+      "<a href=\"https://vega-design-tracker.vercel.app?logout=1\">Abrir VEGA Design Tracker</a>")
+    .replace(/\n/g,"<br>");
+  // Outlook 365 Web con body HTML
+  const url = "https://outlook.office365.com/mail/deeplink/compose?to="+encodeURIComponent(to)+"&subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpoHtml);
   const win = window.open(url,"_blank","noopener,noreferrer");
-  if(!win) {
-    // Fallback si el popup fue bloqueado
-    const a = document.createElement("a");
-    a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
-    a.click();
-  }
+  if(!win){const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.click();}
 }
 
 function buildMsgAsignacion(req, disNombre) {
@@ -555,13 +555,24 @@ export default function TradeApp() {
           setPanelNotif({nombre:dis.nombre,telefono:dis.telefono||"",email:dis.email||"",msgWA:msg,asunto,cuerpoEmail,titulo:data.titulo,reqId:data.id});
         }
       } else if(!data.responableId && !esPrioritaria) {
-        // Caso 2: otras áreas SIN diseñador → notificar admins de Trade por email
+        // Caso 2: otras áreas SIN diseñador → panel para notificar a admins Trade por email
         const admins = tradeUsers.filter(u=>u.rol==="admin" && u.activo!==false && u.email);
         if(admins.length>0) {
           const emails = admins.map(u=>u.email);
           const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
-          const cuerpo = "Nueva solicitud recibida de "+data.area+":\n\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
-          setTimeout(()=>abrirEmail(emails, asunto, cuerpo), 500);
+          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño pendiente de asignación.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app?logout=1";
+          const nombresAdmins = admins.map(u=>u.nombre).join(", ");
+          setPanelNotif({
+            nombre:"Equipo Trade ("+nombresAdmins+")",
+            telefono:"",
+            email:emails.join(","),
+            msgWA:"",
+            asunto,
+            cuerpoEmail:cuerpo,
+            titulo:data.titulo,
+            reqId:data.id,
+            esOtraArea:true,
+          });
         }
       }
     }
@@ -775,18 +786,18 @@ export default function TradeApp() {
             <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:12,fontSize:11,color:"#1a2f4a",marginBottom:14,whiteSpace:"pre-wrap",maxHeight:110,overflow:"auto",lineHeight:1.6}}>{panelNotif.msgWA}</div>
             <div style={{fontSize:10,fontWeight:700,color:"#5a7a9a",letterSpacing:".05em",marginBottom:8}}>SELECCIONA EL CANAL</div>
             <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>
-              {panelNotif.telefono&&(
+              {panelNotif.telefono&&!panelNotif.esOtraArea&&(
                 <button onClick={async()=>{abrirWA(panelNotif.telefono,panelNotif.msgWA);if(panelNotif.reqId)await setDoc(doc(db,"trade_solicitudes",panelNotif.reqId),{...solicitudes.find(s=>s.id===panelNotif.reqId),tsNotificado:new Date().toISOString()},{merge:true});}}
                   style={{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",borderRadius:11,border:"1.5px solid #00b894",background:"#e8faf5",color:"#085041",cursor:"pointer",fontWeight:700,fontSize:12,textAlign:"left"}}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="#00b894" style={{flexShrink:0}}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                   <div><div style={{fontWeight:700}}>WA directo a {panelNotif.nombre}</div><div style={{fontSize:10,fontWeight:400,color:"#0F6E56",marginTop:1}}>Abre WhatsApp con mensaje listo</div></div>
                 </button>
               )}
-              <button onClick={async()=>{abrirWA("",panelNotif.msgWA);if(panelNotif.reqId)await setDoc(doc(db,"trade_solicitudes",panelNotif.reqId),{...solicitudes.find(s=>s.id===panelNotif.reqId),tsNotificado:new Date().toISOString()},{merge:true});}}
+              {!panelNotif.esOtraArea&&<button onClick={async()=>{abrirWA("",panelNotif.msgWA);if(panelNotif.reqId)await setDoc(doc(db,"trade_solicitudes",panelNotif.reqId),{...solicitudes.find(s=>s.id===panelNotif.reqId),tsNotificado:new Date().toISOString()},{merge:true});}}
                 style={{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",borderRadius:11,border:"1.5px solid #25D366",background:"#f0fff8",color:"#128C7E",cursor:"pointer",fontWeight:700,fontSize:12,textAlign:"left"}}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366" style={{flexShrink:0}}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                 <div><div style={{fontWeight:700}}>Grupo CARTELERÍA</div><div style={{fontSize:10,fontWeight:400,color:"#085041",marginTop:1}}>Reenvía desde tu WhatsApp al grupo</div></div>
-              </button>
+              </button>}
               {panelNotif.email&&(
                 <button onClick={async()=>{abrirEmail([panelNotif.email],panelNotif.asunto,panelNotif.cuerpoEmail);if(panelNotif.reqId)await setDoc(doc(db,"trade_solicitudes",panelNotif.reqId),{...solicitudes.find(s=>s.id===panelNotif.reqId),tsNotificado:new Date().toISOString()},{merge:true});}}
                   style={{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",borderRadius:11,border:"1.5px solid #0984e3",background:"#e8f4fd",color:"#0c447c",cursor:"pointer",fontWeight:700,fontSize:12,textAlign:"left"}}>
