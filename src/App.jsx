@@ -436,7 +436,7 @@ export default function TradeApp() {
 
   /* ── ESTILOS BASE ── */
   const S={
-    wrap:{fontFamily:"'DM Sans',system-ui,sans-serif",background:"#f0f4f8",minHeight:"100vh",color:"#1a2f4a"},
+    wrap:{fontFamily:"'DM Sans',system-ui,sans-serif",background:"#f0f4f8",minHeight:"100vh",color:"#1a2f4a",width:"100%",boxSizing:"border-box"},
     card:{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",boxShadow:"0 2px 8px rgba(0,0,0,.05)"},
     inp:{width:"100%",padding:"10px 13px",borderRadius:10,border:"1px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",fontSize:13,outline:"none",boxSizing:"border-box",fontFamily:"inherit"},
     lbl:{fontSize:10,fontWeight:700,color:"#5a7a9a",letterSpacing:".05em",display:"block",marginBottom:5},
@@ -457,7 +457,7 @@ export default function TradeApp() {
   return(
     <div style={S.wrap}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
-      <div style={{background:"#1a2f4a",padding:"11px 18px 0",position:"sticky",top:0,zIndex:10}}>
+      <div style={{background:"#1a2f4a",padding:"11px 24px 0",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
           <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#4A5568,#2D3748)",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(255,255,255,.2)"}}>
               <svg width="24" height="24" viewBox="0 0 52 52" fill="none">
@@ -489,7 +489,7 @@ export default function TradeApp() {
         </div>
       </div>
 
-      <div style={{padding:"16px 18px"}}>
+      <div style={{padding:"16px 24px",maxWidth:"100%",boxSizing:"border-box"}}>
         {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName}/>}
         {tab===1&&isAdmin&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}}/>}
         {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast}/>}
@@ -894,7 +894,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
   const set=(k,v)=>setBrief(p=>({...p,[k]:v}));
   const toggleMat=(m)=>setBrief(p=>({...p,materiales:p.materiales.includes(m)?p.materiales.filter(x=>x!==m):[...p.materiales,m]}));
   return(
-    <div style={{maxWidth:740,margin:"0 auto"}}>
+    <div style={{maxWidth:"100%"}}>
       <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:17,color:"#1a2f4a",marginBottom:3}}>{editMode?"Editar actividad":"Nueva actividad de diseño"}</div>
       <div style={{fontSize:11,color:"#8aaabb",marginBottom:18}}>Completa el brief — el equipo de diseño lo recibirá automáticamente</div>
       <div style={{...S.card,padding:18,marginBottom:12}}>
