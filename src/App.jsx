@@ -181,8 +181,8 @@ function getAlerta(req) {
   if(stat==="en_diseno") {
     if(fe && hoy > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
     const dias = fe ? Math.ceil((new Date(fe)-new Date(hoy))/86400000) : null;
-    if(dias!==null && dias<=2) return {label:"Próximo "+dias+"d",c:"#e17055",bg:"#fff1ee"};
-    return {label:"En diseño",c:"#6c5ce7",bg:"#f0edff"};
+    if(dias!==null && dias<=2) return {label:"En proceso",c:"#6c5ce7",bg:"#f0edff"};
+    return {label:"En proceso",c:"#6c5ce7",bg:"#f0edff"};
   }
 
   return {label:"—",c:"#b2bec3",bg:"#f4f6f8"};
@@ -191,6 +191,19 @@ function getAlerta(req) {
 function calcDiasRetraso(fechaStr) {
   if(!fechaStr) return 0;
   return Math.ceil((new Date(todayStr())-new Date(fechaStr))/86400000);
+}
+
+function calcTiempo(req) {
+  const fi = req.fechaInicio || req.creadoEn?.slice(0,10);
+  const fe = req.fechaEntrega || req.deadline;
+  if(!fi||!fe) return {dias:0,total:0,pct:0,label:"—"};
+  const inicio = new Date(fi);
+  const fin = new Date(fe);
+  const hoy = new Date(todayStr());
+  const total = Math.max(1,Math.ceil((fin-inicio)/86400000));
+  const transcurrido = Math.max(0,Math.min(total,Math.ceil((hoy-inicio)/86400000)));
+  const pct = Math.round((transcurrido/total)*100);
+  return {dias:transcurrido, total, pct, label:transcurrido+"/"+total};
 }
 
 const sc = v=>{ if(!v&&v!==0)return"#b2bec3"; if(v>=90)return"#00b894"; if(v>=70)return"#f6a623"; if(v>=50)return"#e17055"; return"#d63031"; };
@@ -359,7 +372,7 @@ export default function TradeApp() {
 
   function emptyBrief(){
     return{titulo:"",area:"Trade Marketing",solicitante:"",prioridad:"Normal",
-      tipo:"",fechaInicio:"",fechaEntrega:"",horaCorte:"",hEst:"",objetivo:"",publico:"",mensaje:"",
+      tipo:"",fechaInicio:"",horaInicio:"",fechaEntrega:"",horaCorte:"",hEst:"",objetivo:"",publico:"",mensaje:"",
       mecanica:"",materiales:[],medidas:"",tono:"",restricciones:"",
       comentarios:"",recursos:"",productosInvolucrados:"",
       responableId:"",responableNombre:""};
@@ -375,6 +388,7 @@ export default function TradeApp() {
       ...brief,id,
       deadline:brief.fechaEntrega||"",
       fechaInicio:brief.fechaInicio||"",
+      horaInicio:brief.horaInicio||"",
       fechaEntrega:brief.fechaEntrega||"",
       horaCorte:brief.horaCorte||"",
       stat:briefEdit?(existing?.stat||"pendiente"):(brief.responableId?"en_diseno":"pendiente"),
@@ -448,7 +462,7 @@ export default function TradeApp() {
     setBrief({
       titulo:req.titulo||"",area:req.area||"Trade Marketing",
       solicitante:req.solicitante||"",prioridad:req.prioridad||"Normal",
-      tipo:req.tipo||"",fechaInicio:req.fechaInicio||"",fechaEntrega:req.fechaEntrega||"",horaCorte:req.horaCorte||"",hEst:req.hEst||"",
+      tipo:req.tipo||"",fechaInicio:req.fechaInicio||"",horaInicio:req.horaInicio||"",fechaEntrega:req.fechaEntrega||"",horaCorte:req.horaCorte||"",hEst:req.hEst||"",
       objetivo:req.objetivo||"",publico:req.publico||"",mensaje:req.mensaje||"",
       mecanica:req.mecanica||"",materiales:req.materiales||[],
       medidas:req.medidas||"",tono:req.tono||"",restricciones:req.restricciones||"",
@@ -824,8 +838,8 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
             <thead>
               <tr style={{background:"#f8fafc"}}>
-                {["ACTIVIDAD","TIPO","ALERTA","RESPONSABLE","F.INICIO","F.ENTREGA","HORA CORTE","HH","ÁREA",""].map((h,i)=>(
-                  <th key={i} style={{padding:"9px 12px",textAlign:i>1?"center":"left",color:"#5a7a9a",fontWeight:700,fontSize:9,letterSpacing:".06em",borderBottom:"1px solid #e9eef5",whiteSpace:"nowrap"}}>{h}</th>
+                {["TIPO","ACTIVIDAD","ÁREA","RESPONSABLE","F. ENTREGA","ESTATUS","ALERTA","TIEMPO","DÍAS",""].map((h,i)=>(
+                  <th key={i} style={{padding:"9px 12px",textAlign:"left",color:"#5a7a9a",fontWeight:700,fontSize:9,letterSpacing:".06em",borderBottom:"1px solid #e9eef5",whiteSpace:"nowrap"}}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -841,41 +855,65 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                   <tr key={req.id} style={{borderBottom:"1px solid #f5f7fa"}}
                     onMouseEnter={e=>e.currentTarget.style.background="#f8fcff"}
                     onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                    <td style={{padding:"10px 12px"}}>
+                      <td style={{padding:"10px 8px"}}>
+                      <span style={S.pill(c+"cc",c+"18")}>{tipo?.e||"📌"} {tipo?.n||req.tipo}</span>
+                    </td>
+                    <td style={{padding:"10px 12px",minWidth:180}}>
                       <div style={{fontWeight:700,color:"#1a2f4a",marginBottom:2}}>{req.titulo}</div>
                       <div style={{fontSize:9,color:"#8aaabb"}}>{req.id} · {req.creadoPor} · {req.creadoEn?.slice(0,10)}</div>
                     </td>
-                    <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <span style={S.pill(c+"cc",c+"18")}>{tipo?.e||"📌"} {tipo?.n||req.tipo}</span>
+                    <td style={{padding:"10px 8px"}}>
+                      <span style={S.pill("#5a7a9a","#f0f4f8")}>{req.area||"—"}</span>
                     </td>
-                    <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      {(()=>{const a=getAlerta(req);return <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:a.c,background:a.bg,whiteSpace:"nowrap"}}>{a.label}</span>;})()}
-                    </td>
-                    <td style={{padding:"10px 8px",textAlign:"center"}}>
+                    <td style={{padding:"10px 8px"}}>
                       {resp
-                        ?<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                            <div style={{width:24,height:24,borderRadius:"50%",background:resp.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700}}>{resp.iniciales||getIniciales(resp.nombre)}</div>
+                        ?<div style={{display:"flex",alignItems:"center",gap:5}}>
+                            <div style={{width:24,height:24,borderRadius:"50%",background:resp.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700,flexShrink:0}}>{resp.iniciales||getIniciales(resp.nombre)}</div>
                             <span style={{fontSize:10,color:"#5a7a9a"}}>{resp.nombre.split(" ")[0]}</span>
                           </div>
                         :<span style={{fontSize:10,color:"#b2bec3"}}>Sin asignar</span>}
                     </td>
-                    <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <span style={{fontSize:11,color:"#5a7a9a"}}>{req.fechaInicio||req.creadoEn?.slice(0,10)||"—"}</span>
+                    <td style={{padding:"10px 8px",whiteSpace:"nowrap"}}>
+                      <div style={{fontSize:11,fontWeight:700,color:"#1a2f4a"}}>{req.fechaEntrega||req.deadline||"—"}</div>
+                      {req.horaCorte&&<div style={{fontSize:9,color:"#8aaabb"}}>{req.horaCorte}</div>}
+                    </td>
+                    <td style={{padding:"10px 8px"}}>
+                      {isAdmin
+                        ?<select value={req.stat} onChange={async e=>{
+                            await setDoc(doc(db,"trade_solicitudes",req.id),{...req,stat:e.target.value,updatedAt:new Date().toISOString()});
+                            showToast("✅ Estado actualizado");
+                          }}
+                          style={{padding:"4px 8px",borderRadius:8,border:"1.5px solid "+c+"40",background:c+"18",color:c,fontWeight:700,fontSize:11,cursor:"pointer",outline:"none"}}>
+                          {Object.entries(STAT_L).map(([k,v])=><option key={k} value={k}>{v}</option>)}
+                        </select>
+                        :<span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:c,background:c+"18"}}>{STAT_L[req.stat]||req.stat}</span>}
+                    </td>
+                    <td style={{padding:"10px 8px"}}>
+                      {(()=>{const a=getAlerta(req);return <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:a.c,background:a.bg,whiteSpace:"nowrap"}}>{a.label}</span>;})()}
+                    </td>
+                    <td style={{padding:"10px 8px",minWidth:100}}>
+                      {(()=>{
+                        const t=calcTiempo(req);
+                        if(!t.total) return <span style={{color:"#b2bec3",fontSize:11}}>—</span>;
+                        const barC=t.pct>=100?"#e17055":t.pct>=70?"#f6a623":"#6c5ce7";
+                        return <div>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:10,marginBottom:3}}>
+                            <span style={{fontWeight:700,color:"#1a2f4a"}}>{t.label}</span>
+                            <span style={{fontWeight:700,color:barC}}>{t.pct}%</span>
+                          </div>
+                          <div style={{height:5,background:"#f0f4f8",borderRadius:3}}>
+                            <div style={{width:Math.min(t.pct,100)+"%",height:"100%",background:barC,borderRadius:3}}/>
+                          </div>
+                        </div>;
+                      })()}
                     </td>
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <span style={{fontWeight:700,color:"#1a2f4a",fontSize:11}}>{req.fechaEntrega||req.deadline||"—"}</span>
+                      {(()=>{
+                        const t=calcTiempo(req);
+                        return <span style={{fontSize:11,fontWeight:700,color:t.dias>t.total?"#e17055":"#1a2f4a"}}>{t.dias||"—"}</span>;
+                      })()}
                     </td>
-                    <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <span style={{fontSize:11,color:"#5a7a9a"}}>{req.horaCorte||"—"}</span>
-                    </td>
-                    <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      {req.hReal>0
-                        ?<span style={{fontWeight:700,color:req.hReal>(parseFloat(req.hEst)||99)?"#e17055":"#00b894"}}>{req.hReal}h</span>
-                        :<span style={{color:"#b2bec3"}}>—h</span>}
-                    </td>
-                    <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <span style={S.pill("#5a7a9a","#f0f4f8")}>{req.area||"—"}</span>
-                    </td>
+
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
                       <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap"}}>
                         {isAdmin&&<button onClick={()=>editarActividad(req)} style={{padding:"4px 8px",borderRadius:7,border:"1px solid #a29bfe",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:10,fontWeight:700}}>✏️</button>}
@@ -963,6 +1001,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
           <div><label style={S.lbl}>ÁREA</label><select value={brief.area} onChange={e=>set("area",e.target.value)} style={S.inp}>{areas.map(a=><option key={a}>{a}</option>)}</select></div>
           <div><label style={S.lbl}>FECHA INICIO <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.fechaInicio} onChange={e=>set("fechaInicio",e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>FECHA ENTREGA <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.fechaEntrega} onChange={e=>set("fechaEntrega",e.target.value)} style={S.inp}/></div>
+          <div><label style={S.lbl}>HORA DE INICIO</label><input type="time" value={brief.horaInicio} onChange={e=>set("horaInicio",e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>HORA DE CORTE <span style={{fontSize:9,color:"#8aaabb",fontWeight:400}}>(pasada esta hora → retraso)</span></label><input type="time" value={brief.horaCorte} onChange={e=>set("horaCorte",e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>PRIORIDAD</label><select value={brief.prioridad} onChange={e=>set("prioridad",e.target.value)} style={S.inp}>{["Normal","Media","Alta","Urgente"].map(p=><option key={p}>{p}</option>)}</select></div>
           <div style={{gridColumn:"1/-1"}}>
