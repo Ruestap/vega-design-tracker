@@ -1596,11 +1596,11 @@ function DisenaoresPanel({S,dis,config,saveConfig,showNewD,setShowNewD,newDis,se
 function TabUsuarios({S,showToast}){
   const [usuarios,setUsuarios]=useState([]);
   const [showForm,setShowForm]=useState(false);
-  const [form,setForm]=useState({nombre:"",dni:"",rol:"disenador"});
+  const [form,setForm]=useState({nombre:"",dni:"",rol:"disenador",email:"",area:"Trade Marketing",telefono:""});
   const [saving,setSaving]=useState(false);
   const [search,setSearch]=useState("");
   const [editUserId,setEditUserId]=useState(null);
-  const [editUserData,setEditUserData]=useState({nombre:"",dni:""});
+  const [editUserData,setEditUserData]=useState({nombre:"",dni:"",email:"",area:"",telefono:""});
   const ROLES_U=["admin","disenador","viewer"];
   const ROL_META={
     admin:   {emoji:"🪪", label:"Admin",       color:"#f6a623", bg:"#fff8ec"},
@@ -1626,8 +1626,8 @@ function TabUsuarios({S,showToast}){
     if(usuarios.find(u=>u.nombre.toLowerCase()===form.nombre.trim().toLowerCase())){showToast("⚠ Ya existe ese nombre");return;}
     setSaving(true);
     try{
-      await addDoc(collection(db,"trade_users"),{nombre:form.nombre.trim(),dni:form.dni.trim(),rol:form.rol,activo:true});
-      setForm({nombre:"",dni:"",rol:"disenador"});setShowForm(false);showToast("✅ Usuario creado");
+      await addDoc(collection(db,"trade_users"),{nombre:form.nombre.trim(),dni:form.dni.trim(),rol:form.rol,email:form.email.trim(),area:form.area,telefono:form.telefono.trim(),activo:true});
+      setForm({nombre:"",dni:"",rol:"disenador",email:"",area:"Trade Marketing",telefono:""});setShowForm(false);showToast("✅ Usuario creado");
     }catch{showToast("❌ Error al guardar");}
     setSaving(false);
   };
@@ -1641,7 +1641,7 @@ function TabUsuarios({S,showToast}){
   };
   const handleGuardarEdit=async(id)=>{
     if(!editUserData.nombre.trim()||!editUserData.dni.trim()){showToast("⚠ Completa nombre y DNI");return;}
-    try{await updateDoc(doc(db,"trade_users",id),{nombre:editUserData.nombre.trim(),dni:editUserData.dni.trim()});setEditUserId(null);showToast("✅ Usuario actualizado");}
+    try{await updateDoc(doc(db,"trade_users",id),{nombre:editUserData.nombre.trim(),dni:editUserData.dni.trim(),email:(editUserData.email||"").trim(),area:editUserData.area||"",telefono:(editUserData.telefono||"").trim()});setEditUserId(null);showToast("✅ Usuario actualizado");}
     catch{showToast("❌ Error al actualizar");}
   };
   const filtrados=usuarios.filter(u=>u.nombre.toLowerCase().includes(search.toLowerCase())||(u.rol||"").toLowerCase().includes(search.toLowerCase()));
@@ -1659,6 +1659,13 @@ function TabUsuarios({S,showToast}){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
             <div><label style={S.lbl}>NOMBRE COMPLETO</label><input style={S.inp} placeholder="Ej: María Castillo" value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))}/></div>
             <div><label style={S.lbl}>DNI <span style={{fontSize:9,color:"#8aaabb"}}>(credencial de ingreso)</span></label><input style={S.inp} placeholder="12345678" value={form.dni} onChange={e=>setForm(p=>({...p,dni:e.target.value}))}/></div>
+            <div><label style={S.lbl}>EMAIL CORPORATIVO</label><input style={S.inp} placeholder="usuario@grupovega.pe" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))}/></div>
+            <div><label style={S.lbl}>ÁREA</label>
+              <select style={S.inp} value={form.area} onChange={e=>setForm(p=>({...p,area:e.target.value}))}>
+                {["Trade Marketing","Marketing","Marketing Digital","Ecommerce","Servicio al Cliente","Comercial","Operaciones","Gerencia","Otra"].map(a=><option key={a}>{a}</option>)}
+              </select>
+            </div>
+            <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>TELÉFONO WHATSAPP <span style={{fontSize:9,color:"#8aaabb"}}>(+51 9XX XXX XXX)</span></label><input style={S.inp} placeholder="+51 999 888 777" value={form.telefono} onChange={e=>setForm(p=>({...p,telefono:e.target.value}))}/></div>
           </div>
           <div style={{marginBottom:14}}>
             <label style={S.lbl}>ROL</label>
@@ -1684,15 +1691,27 @@ function TabUsuarios({S,showToast}){
             <div key={u.id} style={{...S.card,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,opacity:u.activo?1:.5}}>
               <div style={{width:40,height:40,borderRadius:10,background:meta.bg,border:"1.5px solid "+meta.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,color:meta.color,flexShrink:0}}>{getIniciales(u.nombre)}</div>
               {editUserId===u.id
-                ?<div style={{flex:1,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                  <input value={editUserData.nombre} onChange={e=>setEditUserData(p=>({...p,nombre:e.target.value}))} style={{...S.inp,flex:1,minWidth:120,padding:"6px 10px"}} placeholder="Nombre"/>
-                  <input value={editUserData.dni} onChange={e=>setEditUserData(p=>({...p,dni:e.target.value}))} style={{...S.inp,width:110,padding:"6px 10px"}} placeholder="DNI"/>
-                  <button onClick={()=>handleGuardarEdit(u.id)} style={{padding:"6px 12px",borderRadius:8,border:"none",background:"#00b894",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:11}}>✓</button>
-                  <button onClick={()=>setEditUserId(null)} style={{padding:"6px 10px",borderRadius:8,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:11}}>✕</button>
+                ?<div style={{flex:1,display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,alignItems:"center"}}>
+                  <input value={editUserData.nombre} onChange={e=>setEditUserData(p=>({...p,nombre:e.target.value}))} style={{...S.inp,padding:"6px 10px",fontSize:11}} placeholder="Nombre completo"/>
+                  <input value={editUserData.dni} onChange={e=>setEditUserData(p=>({...p,dni:e.target.value}))} style={{...S.inp,padding:"6px 10px",fontSize:11}} placeholder="DNI"/>
+                  <input value={editUserData.email||""} onChange={e=>setEditUserData(p=>({...p,email:e.target.value}))} style={{...S.inp,padding:"6px 10px",fontSize:11}} placeholder="email@grupovega.pe"/>
+                  <select value={editUserData.area||"Trade Marketing"} onChange={e=>setEditUserData(p=>({...p,area:e.target.value}))} style={{...S.inp,padding:"6px 10px",fontSize:11}}>
+                    {["Trade Marketing","Marketing","Marketing Digital","Ecommerce","Servicio al Cliente","Comercial","Operaciones","Gerencia","Otra"].map(a=><option key={a}>{a}</option>)}
+                  </select>
+                  <input value={editUserData.telefono||""} onChange={e=>setEditUserData(p=>({...p,telefono:e.target.value}))} style={{...S.inp,padding:"6px 10px",fontSize:11}} placeholder="+51 999 888 777"/>
+                  <div style={{display:"flex",gap:6}}>
+                    <button onClick={()=>handleGuardarEdit(u.id)} style={{flex:1,padding:"6px 10px",borderRadius:8,border:"none",background:"#00b894",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:11}}>✓ Guardar</button>
+                    <button onClick={()=>setEditUserId(null)} style={{padding:"6px 10px",borderRadius:8,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:11}}>✕</button>
+                  </div>
                 </div>
                 :<div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:700,fontSize:13,color:"#1a2f4a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.nombre}</div>
-                  <div style={{fontSize:11,color:"#8aaabb",marginTop:1}}>DNI: {"•".repeat(4)+u.dni.slice(-3)}</div>
+                  <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:3}}>
+                    <span style={{fontSize:10,color:"#8aaabb"}}>DNI: {"•".repeat(4)+u.dni.slice(-3)}</span>
+                    {u.email&&<span style={{fontSize:10,color:"#0984e3",overflow:"hidden",textOverflow:"ellipsis",maxWidth:160}}>{u.email}</span>}
+                    {u.area&&<span style={{fontSize:10,color:"#6c5ce7",background:"#f0edff",padding:"1px 6px",borderRadius:8}}>{u.area}</span>}
+                    {u.telefono&&<span style={{fontSize:10,color:"#00b894"}}>{u.telefono}</span>}
+                  </div>
                 </div>}
               {editUserId!==u.id&&<>
                 <div style={{position:"relative",display:"flex",alignItems:"center"}}>
@@ -1704,7 +1723,7 @@ function TabUsuarios({S,showToast}){
                     {ROLES_U.map(r=><option key={r} value={r}>{ROL_META[r].label}</option>)}
                   </select>
                 </div>
-                <button onClick={()=>{setEditUserId(u.id);setEditUserData({nombre:u.nombre,dni:u.dni});}}
+                <button onClick={()=>{setEditUserId(u.id);setEditUserData({nombre:u.nombre,dni:u.dni,email:u.email||"",area:u.area||"Trade Marketing",telefono:u.telefono||""});}}
                   style={{padding:"6px 10px",borderRadius:8,border:"1px solid #a29bfe",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontWeight:700,fontSize:11}}>✏️</button>
                 <button onClick={()=>handleToggle(u.id,u.activo)}
                   style={{padding:"6px 12px",borderRadius:8,border:"1px solid "+(u.activo?"#fecaca":"#bbf7d0"),background:u.activo?"#fff1f2":"#f0fdf4",color:u.activo?"#dc2626":"#16a34a",cursor:"pointer",fontWeight:700,fontSize:11,whiteSpace:"nowrap"}}>
