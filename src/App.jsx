@@ -675,6 +675,7 @@ export default function TradeApp() {
   const uName=usuario?.nombre||"";
   const isAdmin=role==="admin";
   const isDisenador=role==="disenador";
+  const isViewer=role==="viewer";
   const canCreate=role==="admin";
 
   const solFilt=useMemo(()=>solicitudes.filter(s=>{
