@@ -477,7 +477,7 @@ export default function TradeApp() {
 
             <NotificacionesBell uId={usuario?.id||""} onVerReq={()=>setTab(0)}/>
             <div style={{padding:"4px 10px",borderRadius:20,background:"rgba(108,92,231,.25)",border:"1px solid rgba(108,92,231,.4)",fontSize:9,color:"#a29bfe",fontWeight:700}}>
-              {role==="admin"?<svg width="14" height="14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{display:"inline-block",verticalAlign:"middle",marginRight:2}}><rect x="5" y="20" width="90" height="65" rx="10" fill="#E3E8F0"/><rect x="58" y="20" width="37" height="65" rx="0" fill="#AD1457" fillOpacity="0.85"/><circle cx="30" cy="52" r="16" fill="#90A4AE" stroke="#607D8B" strokeWidth="2"/><circle cx="30" cy="46" r="7" fill="#B0BEC5"/><ellipse cx="30" cy="62" rx="11" ry="7" fill="#5C6BC0"/></svg>:role==="disenador"?"🎨":"👁️"} {uName}
+              {role==="admin"?"🪪":role==="disenador"?"🎨":"👁️"} {uName}
             </div>
             <button onClick={handleLogout} style={{padding:"5px 9px",borderRadius:7,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:"#5a7a9a",cursor:"pointer",fontSize:10,fontWeight:700}} title="Cerrar sesión">↩</button>
           </div>
@@ -658,7 +658,12 @@ function LoginScreen({onLogin,loginError,loginLoading}){
                 <button onClick={()=>{setStep("roles");setDni("");}}
                   style={{padding:"6px 12px",borderRadius:8,border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.07)",color:"#5a7a9a",cursor:"pointer",fontSize:12}}>← Volver</button>
                 <div>
-                  <div style={{color:"#1a2f4a",fontWeight:700,fontSize:15}}>{p.icon} {p.titulo}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,color:"#1a2f4a",fontWeight:700,fontSize:15}}>
+                  {step==="disenador"&&<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect x="5" y="52" width="90" height="42" rx="10" fill="#F5C842"/><rect x="14" y="46" width="72" height="48" rx="8" fill="#FFD966"/><rect x="38" y="60" width="18" height="28" rx="4" fill="#1A5276"/><rect x="20" y="8" width="11" height="48" rx="5.5" fill="#48C9B0"/><rect x="17" y="5" width="17" height="9" rx="4" fill="#1ABC9C"/><rect x="37" y="5" width="9" height="46" rx="4.5" fill="#F1948A"/><ellipse cx="41" cy="4" rx="6" ry="4" fill="#E74C3C"/><rect x="56" y="14" width="9" height="42" rx="4.5" fill="#BDC3C7"/><rect x="54" y="10" width="13" height="7" rx="3" fill="#E67E22"/></svg>}
+                  {step==="admin"&&<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect x="4" y="18" width="92" height="64" rx="10" fill="#CFD8E3" stroke="#37474F" strokeWidth="3"/><rect x="60" y="18" width="36" height="64" rx="0" fill="#880E4F" fillOpacity="0.9"/><rect x="64" y="18" width="32" height="64" rx="0" fill="#AD1457" fillOpacity="0.8"/><circle cx="28" cy="46" r="14" fill="#90A4AE" stroke="#455A64" strokeWidth="2.5"/><circle cx="28" cy="40" r="6" fill="#B0BEC5"/><ellipse cx="28" cy="57" rx="10" ry="6" fill="#3949AB"/><rect x="10" y="67" width="24" height="3.5" rx="1.5" fill="#546E7A"/><rect x="67" y="52" width="18" height="4" rx="2" fill="#F48FB1"/></svg>}
+                  {step==="viewer"&&<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect x="6" y="8" width="88" height="64" rx="8" fill="#3F51B5"/><rect x="12" y="14" width="76" height="52" rx="4" fill="#64B5F6"/><rect x="12" y="14" width="38" height="52" rx="0" fill="#81D4FA"/><circle cx="34" cy="40" r="14" fill="none" stroke="#37474F" strokeWidth="5"/><circle cx="34" cy="40" r="8" fill="#E3F2FD"/><circle cx="66" cy="40" r="14" fill="none" stroke="#455A64" strokeWidth="5"/><circle cx="66" cy="40" r="8" fill="#E8EAF6"/><rect x="47" y="38" width="6" height="4" rx="2" fill="#37474F"/><rect x="36" y="72" width="28" height="8" rx="3" fill="#90A4AE"/><rect x="28" y="78" width="44" height="8" rx="4" fill="#B0BEC5"/></svg>}
+                  {p.titulo}
+                </div>
                   <div style={{color:"#5a7a9a",fontSize:11}}>{p.sub}</div>
                 </div>
               </div>
@@ -1013,7 +1018,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
             <div key={d.id} style={{...S.card,padding:14}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
                 <div style={{width:32,height:32,borderRadius:"50%",background:d.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",fontWeight:700}}>{d.iniciales||getIniciales(d.nombre)}</div>
-                <div><div style={{fontWeight:700,fontSize:12}}>{d.nombre}</div><div style={{fontSize:9,color:"#8aaabb"}}>{d.rol}</div></div>
+                <div><div style={{fontWeight:700,fontSize:12}}>{d.nombre}</div><div style={{fontSize:9,color:"#8aaabb"}}>Team Diseño</div></div>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:10,marginBottom:3}}>
                 <span style={{color:"#5a7a9a"}}>HH semana</span>
@@ -1081,7 +1086,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
             {dis.filter(d=>d.activo!==false).map(d=>(
               <button key={d.id} onClick={()=>{asignarDis(assignModal.id,d.id);setAssignModal(null);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 13px",borderRadius:10,border:"1px solid #e2e8f0",background:"#fff",cursor:"pointer",marginBottom:6,textAlign:"left"}}>
                 <div style={{width:28,height:28,borderRadius:"50%",background:d.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:700}}>{d.iniciales||getIniciales(d.nombre)}</div>
-                <div><div style={{fontWeight:700,fontSize:12,color:"#1a2f4a"}}>{d.nombre}</div><div style={{fontSize:9,color:"#8aaabb"}}>{d.rol}</div></div>
+                <div><div style={{fontWeight:700,fontSize:12,color:"#1a2f4a"}}>{d.nombre}</div><div style={{fontSize:9,color:"#8aaabb"}}>Team Diseño</div></div>
               </button>
             ))}
             <button onClick={()=>setAssignModal(null)} style={{width:"100%",padding:"9px",borderRadius:9,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:12,marginTop:4}}>Cancelar</button>
@@ -1561,7 +1566,7 @@ function TabUsuarios({S,showToast}){
 /* ══ TAB CONFIG — SIN TAB USUARIOS ═════════════════════ */
 function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNewTipo,newDis,setNewDis,showNewT,setShowNewT,showNewD,setShowNewD,showToast}){
   /* 4 tabs: Tipos · Diseñadores · Áreas · Usuarios */
-  const tabs=["📦 Tipos de trabajo","📐 Áreas","👤 Usuarios"];
+  const tabs=["📦 Tipos de trabajo","📐 Áreas","🫂 Usuarios"];
   const tipos=config.tipos||[];
   const dis=config.disenadores||[];
   const areas=config.areas||AREAS_DEFAULT;
