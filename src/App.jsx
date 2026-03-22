@@ -274,16 +274,12 @@ export default function TradeApp() {
 
       /* Rol viewer: acceso directo sin DNI en DB (solo código configurado) */
       if(rolSolicitado==="viewer"){
-        const cfgSnap=await getDocs(collection(db,"trade_config"));
-        /* Buscamos en config si hay pin de viewer */
-        const cfgDoc=await getDocs(query(collection(db,"trade_config")));
-        let pinViewer="gerencia1";
-        cfgDoc.forEach(d=>{ if(d.id==="app"&&d.data().pins?.viewer) pinViewer=d.data().pins.viewer; });
-        if(dni===pinViewer){
-          setUsuario({id:"viewer-"+Date.now(),nombre:"Visor Gerencial",rol:"viewer",iniciales:"VG"});
-          setLoginLoading(false); return;
-        }
-        setLoginError("Código incorrecto.");setLoginLoading(false);return;
+        const q=query(collection(db,"trade_users"),where("dni","==",dni),where("rol","==","viewer"),where("activo","==",true));
+        const snap=await getDocs(q);
+        if(snap.empty){setLoginError("Código incorrecto o sin acceso.");setLoginLoading(false);return;}
+        const d=snap.docs[0].data();
+        setUsuario({id:snap.docs[0].id,nombre:d.nombre,rol:"viewer",iniciales:getIniciales(d.nombre)});
+        setLoginLoading(false); return;
       }
 
       /* Admin: busca DNI en trade_users con rol admin */
@@ -481,7 +477,7 @@ export default function TradeApp() {
 
             <NotificacionesBell uId={usuario?.id||""} onVerReq={()=>setTab(0)}/>
             <div style={{padding:"4px 10px",borderRadius:20,background:"rgba(108,92,231,.25)",border:"1px solid rgba(108,92,231,.4)",fontSize:9,color:"#a29bfe",fontWeight:700}}>
-              {role==="admin"?"👑":role==="disenador"?"🎨":"👁️"} {uName}
+              {role==="admin"?<svg width="14" height="14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{display:"inline-block",verticalAlign:"middle",marginRight:2}}><rect x="5" y="20" width="90" height="65" rx="10" fill="#E3E8F0"/><rect x="58" y="20" width="37" height="65" rx="0" fill="#AD1457" fillOpacity="0.85"/><circle cx="30" cy="52" r="16" fill="#90A4AE" stroke="#607D8B" strokeWidth="2"/><circle cx="30" cy="46" r="7" fill="#B0BEC5"/><ellipse cx="30" cy="62" rx="11" ry="7" fill="#5C6BC0"/></svg>:role==="disenador"?"🎨":"👁️"} {uName}
             </div>
             <button onClick={handleLogout} style={{padding:"5px 9px",borderRadius:7,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:"#5a7a9a",cursor:"pointer",fontSize:10,fontWeight:700}} title="Cerrar sesión">↩</button>
           </div>
@@ -603,16 +599,17 @@ function LoginScreen({onLogin,loginError,loginLoading}){
               onMouseLeave={e=>{e.currentTarget.style.background="#f8fafc";e.currentTarget.style.borderColor="#c8d8e8";}}>
               <div style={{width:48,height:48,flexShrink:0}}>
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-                  <rect x="10" y="20" width="80" height="60" rx="10" fill="#C5CAE9"/>
-                  <rect x="10" y="20" width="80" height="60" rx="10" fill="url(#idgrad)"/>
-                  <defs><linearGradient id="idgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#E8EAFF"/><stop offset="100%" stopColor="#C5CAE9"/></linearGradient></defs>
-                  <rect x="30" y="10" width="16" height="22" rx="4" fill="#FFC107"/>
-                  <rect x="34" y="6" width="8" height="10" rx="3" fill="#FFB300"/>
-                  <circle cx="32" cy="58" r="12" fill="#FFCCBC"/>
-                  <ellipse cx="32" cy="72" rx="14" ry="8" fill="#EF5350"/>
-                  <rect x="54" y="42" width="28" height="5" rx="2" fill="#9FA8DA"/>
-                  <rect x="54" y="54" width="22" height="5" rx="2" fill="#9FA8DA"/>
-                  <rect x="54" y="66" width="25" height="5" rx="2" fill="#9FA8DA"/>
+                  <rect x="4" y="18" width="92" height="64" rx="10" fill="#CFD8E3" stroke="#37474F" strokeWidth="3"/>
+                  <rect x="60" y="18" width="36" height="64" rx="0" fill="#880E4F" fillOpacity="0.9"/>
+                  <rect x="64" y="18" width="32" height="64" rx="0" fill="#AD1457" fillOpacity="0.8"/>
+                  <line x1="60" y1="18" x2="72" y2="82" stroke="#C2185B" strokeWidth="3"/>
+                  <circle cx="28" cy="46" r="14" fill="#90A4AE" stroke="#455A64" strokeWidth="2.5"/>
+                  <circle cx="28" cy="40" r="6" fill="#B0BEC5"/>
+                  <ellipse cx="28" cy="57" rx="10" ry="6" fill="#3949AB"/>
+                  <rect x="10" y="67" width="24" height="3.5" rx="1.5" fill="#546E7A"/>
+                  <rect x="10" y="74" width="18" height="3.5" rx="1.5" fill="#546E7A"/>
+                  <rect x="67" y="52" width="18" height="4" rx="2" fill="#F48FB1"/>
+                  <rect x="67" y="62" width="13" height="4" rx="2" fill="#F48FB1"/>
                 </svg>
               </div>
               <div>
@@ -1454,7 +1451,7 @@ function TabUsuarios({S,showToast}){
   const [editUserData,setEditUserData]=useState({nombre:"",dni:""});
   const ROLES_U=["admin","disenador","viewer"];
   const ROL_META={
-    admin:   {emoji:"👑", label:"Admin",       color:"#f6a623", bg:"#fff8ec"},
+    admin:   {emoji:"🪪", label:"Admin",       color:"#f6a623", bg:"#fff8ec"},
     disenador:{emoji:"🎨", label:"Team Diseño", color:"#6c5ce7", bg:"#f0eeff"},
     viewer:  {emoji:"👁️", label:"Visor",        color:"#0984e3", bg:"#e8f4fd"},
   };
