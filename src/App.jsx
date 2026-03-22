@@ -870,7 +870,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
             <thead>
               <tr style={{background:"#f8fafc"}}>
-                {["TIPO","ACTIVIDAD","ÁREA SOLICITANTE","RESPONSABLE","F. ENTREGA","ESTATUS","ALERTA","HH","TIEMPO","DÍAS",""].map((h,i)=>(
+                {["TIPO","ACTIVIDAD","ÁREA SOLICITANTE","RESPONSABLE","F. ENTREGA","H. CIERRE","ESTATUS","ALERTA","HH","TIEMPO","DÍAS",""].map((h,i)=>(
                   <th key={i} style={{padding:"9px 12px",textAlign:"left",color:"#5a7a9a",fontWeight:700,fontSize:9,letterSpacing:".06em",borderBottom:"1px solid #e9eef5",whiteSpace:"nowrap"}}>{h}</th>
                 ))}
               </tr>
@@ -902,15 +902,17 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                     </td>
                     <td style={{padding:"10px 8px"}}>
                       {resp
-                        ?<div style={{display:"flex",alignItems:"center",gap:5}}>
-                            <div style={{width:24,height:24,borderRadius:"50%",background:resp.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700,flexShrink:0}}>{resp.iniciales||getIniciales(resp.nombre)}</div>
-                            <span style={{fontSize:10,color:"#5a7a9a"}}>{resp.nombre.split(" ")[0]}</span>
+                        ?<div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <div style={{width:26,height:26,borderRadius:"50%",background:resp.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700,flexShrink:0}}>{resp.iniciales||getIniciales(resp.nombre)}</div>
+                            <span style={{fontSize:10,fontWeight:700,color:c,background:c+"18",padding:"3px 9px",borderRadius:20,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:120,display:"block"}}>{resp.nombre}</span>
                           </div>
                         :<span style={{fontSize:10,color:"#b2bec3"}}>Sin asignar</span>}
                     </td>
                     <td style={{padding:"10px 8px",whiteSpace:"nowrap"}}>
                       <div style={{fontSize:11,fontWeight:700,color:"#1a2f4a"}}>{req.fechaEntrega||req.deadline||"—"}</div>
-                      {req.horaCorte&&<div style={{fontSize:9,color:"#8aaabb"}}>{req.horaCorte}</div>}
+                    </td>
+                    <td style={{padding:"10px 8px",textAlign:"center"}}>
+                      <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:"#5a7a9a",background:"#f0f4f8",whiteSpace:"nowrap"}}>{req.horaCorte||"—"}</span>
                     </td>
                     <td style={{padding:"10px 8px"}}>
                       {isAdmin
@@ -918,10 +920,10 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                             await setDoc(doc(db,"trade_solicitudes",req.id),{...req,stat:e.target.value,updatedAt:new Date().toISOString()});
                             showToast("✅ Estado actualizado");
                           }}
-                          style={{padding:"4px 8px",borderRadius:8,border:"1.5px solid "+c+"40",background:c+"18",color:c,fontWeight:700,fontSize:11,cursor:"pointer",outline:"none"}}>
+                          style={{padding:"3px 9px",borderRadius:20,border:"none",background:c+"18",color:c,fontWeight:700,fontSize:10,cursor:"pointer",outline:"none",whiteSpace:"nowrap"}}>
                           {Object.entries(STAT_L).map(([k,v])=><option key={k} value={k}>{v}</option>)}
                         </select>
-                        :<span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:c,background:c+"18"}}>{STAT_L[req.stat]||req.stat}</span>}
+                        :<span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:c,background:c+"18",whiteSpace:"nowrap"}}>{STAT_L[req.stat]||req.stat}</span>}
                     </td>
                     <td style={{padding:"10px 8px"}}>
                       {(()=>{const a=getAlerta(req);return <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:a.c,background:a.bg,whiteSpace:"nowrap"}}>{a.label}</span>;})()}
