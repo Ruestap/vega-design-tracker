@@ -626,8 +626,7 @@ export default function TradeApp() {
 
   return(
     <div style={S.wrap}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
-      <div style={{background:"#1a2f4a",padding:"11px 24px 0",position:"sticky",top:0,zIndex:10}}>
+<div style={{background:"#1a2f4a",padding:"11px 24px 0",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
           <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#4A5568,#2D3748)",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(255,255,255,.2)"}}>
               <svg width="24" height="24" viewBox="0 0 52 52" fill="none">
@@ -712,8 +711,7 @@ function LoginScreen({onLogin,loginError,loginLoading}){
 
   return(
     <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",background:"linear-gradient(160deg,#f0f4f8 0%,#e8eef5 60%,#dce6f0 100%)",minHeight:"100vh",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",boxSizing:"border-box"}}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
-      <div style={{width:"100%",maxWidth:460,background:"#fff",border:"1px solid #e2e8f0",borderRadius:22,padding:"40px 36px",boxSizing:"border-box",boxShadow:"0 8px 32px rgba(0,0,0,.08)"}}>
+<div style={{width:"100%",maxWidth:460,background:"#fff",border:"1px solid #e2e8f0",borderRadius:22,padding:"40px 36px",boxSizing:"border-box",boxShadow:"0 8px 32px rgba(0,0,0,.08)"}}>
 
         {/* Logo */}
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,marginBottom:28,textAlign:"center"}}>
