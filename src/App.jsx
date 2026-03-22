@@ -617,7 +617,7 @@ export default function TradeApp() {
 
       <div style={{padding:"16px 24px",maxWidth:"100%",boxSizing:"border-box"}}>
         {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName}/>}
-        {tab===1&&isAdmin&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}}/>}
+        {tab===1&&isAdmin&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes}/>}
         {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast}/>}
         {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador}/>}
         {tab===4&&isAdmin&&<TabConfig S={S} config={config} setConfig={setConfig} saveConfig={saveConfig} cfgTab={cfgTab} setCfgTab={setCfgTab} newTipo={newTipo} setNewTipo={setNewTipo} newDis={newDis} setNewDis={setNewDis} showNewT={showNewT} setShowNewT={setShowNewT} showNewD={showNewD} setShowNewD={setShowNewD} showToast={showToast}/>}
@@ -1062,6 +1062,15 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
   const areas=config.areas||AREAS_DEFAULT;
   const set=(k,v)=>setBrief(p=>({...p,[k]:v}));
   const toggleMat=(m)=>setBrief(p=>({...p,materiales:p.materiales.includes(m)?p.materiales.filter(x=>x!==m):[...p.materiales,m]}));
+  const [disenadoresUsers,setDisenadoresUsers]=useState([]);
+  useEffect(()=>{
+    const unsub=onSnapshot(query(collection(db,"trade_users"),where("rol","==","disenador"),where("activo","==",true)),snap=>{
+      const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));
+      setDisenadoresUsers(arr);
+    });
+    return()=>unsub();
+  },[]);
+  const disenadoresList = disenadoresUsers.length>0 ? disenadoresUsers : (config.disenadores||[]).filter(d=>d.activo!==false);
   return(
     <div style={{maxWidth:"100%"}}>
       <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:17,color:"#1a2f4a",marginBottom:3}}>{editMode?"Editar actividad":"Nueva actividad de diseño"}</div>
@@ -1085,7 +1094,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
                 <div style={{width:26,height:26,borderRadius:"50%",background:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>—</div>
                 <span>Sin asignar</span>
               </label>
-              {(config.disenadores||[]).filter(d=>d.activo!==false).map(d=>{
+              {disenadoresList.map(d=>{
                 const disp=getDisponibilidad(d.id,solicitudes||[],brief.fechaEntrega,brief.horaCorte);
                 const bC=disp.nivel==="libre"?"#00b894":disp.nivel==="ocupado"?"#f6a623":"#e17055";
                 const selC=brief.responableId===d.id?"#6c5ce7":"#e2e8f0";
