@@ -893,9 +893,9 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                         <span style={{fontSize:10,fontWeight:700,color:c}}>{tipo?.n||req.tipo}</span>
                       </div>
                     </td>
-                    <td style={{padding:"10px 12px",minWidth:180}}>
-                      <div style={{fontWeight:700,color:"#1a2f4a",marginBottom:2}}>{req.titulo}</div>
-                      <div style={{fontSize:9,color:"#8aaabb"}}>{req.id} · {req.creadoPor} · {req.creadoEn?.slice(0,10)}</div>
+                    <td style={{padding:"10px 12px",minWidth:160}}>
+                      <div style={{fontWeight:700,color:"#1a2f4a",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:200}}>{req.titulo}</div>
+                      <div style={{fontSize:9,color:"#b2bec3"}}>#{req.id?.slice(-6)} · {req.creadoEn?.slice(0,10)}</div>
                     </td>
                     <td style={{padding:"10px 8px",maxWidth:130}}>
                       <span style={{fontSize:11,color:"#5a7a9a",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{req.area||"—"}</span>
@@ -909,10 +909,12 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                         :<span style={{fontSize:10,color:"#b2bec3"}}>Sin asignar</span>}
                     </td>
                     <td style={{padding:"10px 8px",whiteSpace:"nowrap"}}>
-                      <div style={{fontSize:11,fontWeight:700,color:"#1a2f4a"}}>{req.fechaEntrega||req.deadline||"—"}</div>
+                      <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:"#5a7a9a",background:"#f0f4f8"}}>{req.fechaEntrega||req.deadline||"—"}</span>
                     </td>
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:"#5a7a9a",background:"#f0f4f8",whiteSpace:"nowrap"}}>{req.horaCorte||"—"}</span>
+                      <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:"#5a7a9a",background:"#f0f4f8",whiteSpace:"nowrap"}}>
+                        {req.horaCorte?(()=>{const [h,m]=req.horaCorte.split(":");const hr=parseInt(h);return (hr%12||12)+":"+(m||"00")+" "+(hr<12?"a.m.":"p.m.");})():"—"}
+                      </span>
                     </td>
                     <td style={{padding:"10px 8px"}}>
                       {isAdmin
