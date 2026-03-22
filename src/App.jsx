@@ -483,7 +483,7 @@ export default function TradeApp() {
             <div style={{padding:"4px 10px",borderRadius:20,background:"rgba(108,92,231,.25)",border:"1px solid rgba(108,92,231,.4)",fontSize:9,color:"#a29bfe",fontWeight:700}}>
               {role==="admin"?"👑":role==="disenador"?"🎨":"👁️"} {uName}
             </div>
-            <button onClick={handleLogout} style={{padding:"5px 9px",borderRadius:7,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:"rgba(255,255,255,.7)",cursor:"pointer",fontSize:10,fontWeight:700}} title="Cerrar sesión">↩</button>
+            <button onClick={handleLogout} style={{padding:"5px 9px",borderRadius:7,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:"#5a7a9a",cursor:"pointer",fontSize:10,fontWeight:700}} title="Cerrar sesión">↩</button>
           </div>
         </div>
         <div style={{display:"flex",gap:0,overflowX:"auto"}}>
@@ -513,7 +513,7 @@ function LoginScreen({onLogin,loginError,loginLoading}){
   const [dni,setDni]=useState("");
   const [showDni,setShowDni]=useState(false);
 
-  const inpS={width:"100%",padding:"13px 14px",borderRadius:12,background:"rgba(255,255,255,0.08)",border:"1.5px solid rgba(255,255,255,0.15)",color:"#fff",fontSize:16,outline:"none",boxSizing:"border-box",fontFamily:"'DM Sans',system-ui,sans-serif",transition:"border-color .2s",letterSpacing:2};
+  const inpS={width:"100%",padding:"13px 14px",borderRadius:12,background:"#f8fafc",border:"1.5px solid #c8d8e8",color:"#1a2f4a",fontSize:16,outline:"none",boxSizing:"border-box",fontFamily:"'DM Sans',system-ui,sans-serif",transition:"border-color .2s",letterSpacing:2};
 
   const PASOS={
     disenador:{
@@ -545,9 +545,9 @@ function LoginScreen({onLogin,loginError,loginLoading}){
   };
 
   return(
-    <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",background:"linear-gradient(160deg,#0f1f35 0%,#1a2f4a 60%,#0d1b2e 100%)",minHeight:"100vh",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",boxSizing:"border-box"}}>
+    <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",background:"linear-gradient(160deg,#f0f4f8 0%,#e8eef5 60%,#dce6f0 100%)",minHeight:"100vh",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",boxSizing:"border-box"}}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
-      <div style={{width:"100%",maxWidth:460,background:"rgba(255,255,255,0.05)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:22,padding:"40px 36px",boxSizing:"border-box"}}>
+      <div style={{width:"100%",maxWidth:460,background:"#fff",border:"1px solid #e2e8f0",borderRadius:22,padding:"40px 36px",boxSizing:"border-box",boxShadow:"0 8px 32px rgba(0,0,0,.08)"}}>
 
         {/* Logo */}
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,marginBottom:28,textAlign:"center"}}>
@@ -562,49 +562,96 @@ function LoginScreen({onLogin,loginError,loginLoading}){
             </svg>
           </div>
           <div>
-            <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:18,color:"#fff",letterSpacing:".04em"}}>VEGA · DESIGN TRACKER</div>
-            <div style={{fontSize:10,color:"#8aaabb",letterSpacing:".08em",marginTop:3}}>GESTIÓN DE DISEÑO Y PRODUCCIÓN</div>
+            <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:18,color:"#1a2f4a",letterSpacing:".04em"}}>VEGA · DESIGN TRACKER</div>
+            <div style={{fontSize:10,color:"#5a7a9a",letterSpacing:".08em",marginTop:3}}>GESTIÓN DE DISEÑO Y PRODUCCIÓN</div>
           </div>
         </div>
 
         {/* PASO 1 — Selección de rol */}
         {step==="roles"&&(
           <>
-            <div style={{color:"#8aaabb",fontSize:13,textAlign:"center",marginBottom:20}}>Selecciona tu tipo de acceso</div>
+            <div style={{color:"#5a7a9a",fontSize:13,textAlign:"center",marginBottom:20}}>Selecciona tu tipo de acceso</div>
 
             {/* Team Diseño */}
             <button onClick={()=>{setStep("disenador");setDni("");}}
-              style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid rgba(108,92,231,.5)",background:"rgba(108,92,231,.12)",color:"#fff",cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(108,92,231,.22)";e.currentTarget.style.borderColor="rgba(108,92,231,.8)";}}
-              onMouseLeave={e=>{e.currentTarget.style.background="rgba(108,92,231,.12)";e.currentTarget.style.borderColor="rgba(108,92,231,.5)";}}>
-              <span style={{fontSize:26,flexShrink:0}}>🎨</span>
+              style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
+              onMouseEnter={e=>{e.currentTarget.style.background="#f0edff";e.currentTarget.style.borderColor="#6c5ce7";}}
+              onMouseLeave={e=>{e.currentTarget.style.background="#f8fafc";e.currentTarget.style.borderColor="#c8d8e8";}}>
+              <div style={{width:48,height:48,flexShrink:0}}>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                  <rect x="0" y="55" width="100" height="45" rx="8" fill="#FFD166"/>
+                  <rect x="10" y="50" width="80" height="50" rx="6" fill="#FFE08A"/>
+                  <rect x="40" y="62" width="20" height="30" rx="3" fill="#2D6A8F"/>
+                  <rect x="22" y="15" width="12" height="50" rx="6" fill="#06D6A0"/>
+                  <rect x="19" y="12" width="18" height="8" rx="4" fill="#05B08A"/>
+                  <rect x="40" y="10" width="10" height="48" rx="5" fill="#F78C8C"/>
+                  <ellipse cx="45" cy="9" rx="7" ry="5" fill="#F05454"/>
+                  <rect x="60" y="18" width="10" height="42" rx="5" fill="#BDBDBD"/>
+                  <polygon points="65,15 60,20 70,20" fill="#FF9800"/>
+                </svg>
+              </div>
               <div>
-                <div style={{fontSize:14,fontWeight:800,color:"#a29bfe"}}>Team Diseño</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.55)",marginTop:2}}>Ingreso con mi DNI</div>
+                <div style={{fontSize:14,fontWeight:800,color:"#6c5ce7"}}>Team Diseño</div>
+                <div style={{fontSize:11,color:"#8aaabb",marginTop:2}}>Ingreso con mi DNI</div>
               </div>
             </button>
 
             {/* Administrador */}
             <button onClick={()=>{setStep("admin");setDni("");}}
-              style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid rgba(246,166,35,.5)",background:"rgba(246,166,35,.1)",color:"#fff",cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(246,166,35,.2)";e.currentTarget.style.borderColor="rgba(246,166,35,.8)";}}
-              onMouseLeave={e=>{e.currentTarget.style.background="rgba(246,166,35,.1)";e.currentTarget.style.borderColor="rgba(246,166,35,.5)";}}>
-              <span style={{fontSize:26,flexShrink:0}}>👑</span>
+              style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
+              onMouseEnter={e=>{e.currentTarget.style.background="#fff8ec";e.currentTarget.style.borderColor="#f6a623";}}
+              onMouseLeave={e=>{e.currentTarget.style.background="#f8fafc";e.currentTarget.style.borderColor="#c8d8e8";}}>
+              <div style={{width:48,height:48,flexShrink:0}}>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                  <rect x="10" y="20" width="80" height="60" rx="10" fill="#C5CAE9"/>
+                  <rect x="10" y="20" width="80" height="60" rx="10" fill="url(#idgrad)"/>
+                  <defs><linearGradient id="idgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#E8EAFF"/><stop offset="100%" stopColor="#C5CAE9"/></linearGradient></defs>
+                  <rect x="30" y="10" width="16" height="22" rx="4" fill="#FFC107"/>
+                  <rect x="34" y="6" width="8" height="10" rx="3" fill="#FFB300"/>
+                  <circle cx="32" cy="58" r="12" fill="#FFCCBC"/>
+                  <ellipse cx="32" cy="72" rx="14" ry="8" fill="#EF5350"/>
+                  <rect x="54" y="42" width="28" height="5" rx="2" fill="#9FA8DA"/>
+                  <rect x="54" y="54" width="22" height="5" rx="2" fill="#9FA8DA"/>
+                  <rect x="54" y="66" width="25" height="5" rx="2" fill="#9FA8DA"/>
+                </svg>
+              </div>
               <div>
-                <div style={{fontSize:14,fontWeight:800,color:"#f6a623"}}>Administrador</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.55)",marginTop:2}}>Ingreso con mi DNI</div>
+                <div style={{fontSize:14,fontWeight:800,color:"#e67e22"}}>Administrador</div>
+                <div style={{fontSize:11,color:"#8aaabb",marginTop:2}}>Ingreso con mi DNI</div>
               </div>
             </button>
 
             {/* Visor Gerencial */}
             <button onClick={()=>{setStep("viewer");setDni("");}}
-              style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid rgba(9,132,227,.4)",background:"rgba(9,132,227,.1)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(9,132,227,.2)";e.currentTarget.style.borderColor="rgba(9,132,227,.8)";}}
-              onMouseLeave={e=>{e.currentTarget.style.background="rgba(9,132,227,.1)";e.currentTarget.style.borderColor="rgba(9,132,227,.4)";}}>
-              <span style={{fontSize:26,flexShrink:0}}>👁️</span>
+              style={{width:"100%",padding:"16px 18px",borderRadius:14,border:"1.5px solid #c8d8e8",background:"#f8fafc",color:"#1a2f4a",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all .15s"}}
+              onMouseEnter={e=>{e.currentTarget.style.background="#e8f4fd";e.currentTarget.style.borderColor="#0984e3";}}
+              onMouseLeave={e=>{e.currentTarget.style.background="#f8fafc";e.currentTarget.style.borderColor="#c8d8e8";}}>
+              <div style={{width:48,height:48,flexShrink:0}}>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                  <circle cx="50" cy="50" r="18" fill="#5C6BC0"/>
+                  <circle cx="50" cy="44" r="8" fill="#E8EAF6"/>
+                  <ellipse cx="50" cy="58" rx="10" ry="6" fill="#E8EAF6"/>
+                  <circle cx="50" cy="12" r="8" fill="#64B5F6"/>
+                  <circle cx="50" cy="88" r="8" fill="#64B5F6"/>
+                  <circle cx="12" cy="50" r="8" fill="#64B5F6"/>
+                  <circle cx="88" cy="50" r="8" fill="#64B5F6"/>
+                  <circle cx="22" cy="22" r="8" fill="#90CAF9"/>
+                  <circle cx="78" cy="22" r="8" fill="#90CAF9"/>
+                  <circle cx="22" cy="78" r="8" fill="#90CAF9"/>
+                  <circle cx="78" cy="78" r="8" fill="#90CAF9"/>
+                  <line x1="50" y1="32" x2="50" y2="20" stroke="#B0BEC5" strokeWidth="3"/>
+                  <line x1="50" y1="68" x2="50" y2="80" stroke="#B0BEC5" strokeWidth="3"/>
+                  <line x1="32" y1="50" x2="20" y2="50" stroke="#B0BEC5" strokeWidth="3"/>
+                  <line x1="68" y1="50" x2="80" y2="50" stroke="#B0BEC5" strokeWidth="3"/>
+                  <line x1="37" y1="37" x2="28" y2="28" stroke="#B0BEC5" strokeWidth="3"/>
+                  <line x1="63" y1="37" x2="72" y2="28" stroke="#B0BEC5" strokeWidth="3"/>
+                  <line x1="37" y1="63" x2="28" y2="72" stroke="#B0BEC5" strokeWidth="3"/>
+                  <line x1="63" y1="63" x2="72" y2="72" stroke="#B0BEC5" strokeWidth="3"/>
+                </svg>
+              </div>
               <div>
-                <div style={{fontSize:14,fontWeight:800,color:"#74b9ff"}}>Visor Gerencial</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.55)",marginTop:2}}>Código de acceso</div>
+                <div style={{fontSize:14,fontWeight:800,color:"#0984e3"}}>Visor Gerencial</div>
+                <div style={{fontSize:11,color:"#8aaabb",marginTop:2}}>Código de acceso</div>
               </div>
             </button>
           </>
@@ -617,17 +664,17 @@ function LoginScreen({onLogin,loginError,loginLoading}){
             <>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:22}}>
                 <button onClick={()=>{setStep("roles");setDni("");}}
-                  style={{padding:"6px 12px",borderRadius:8,border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.07)",color:"rgba(255,255,255,.7)",cursor:"pointer",fontSize:12}}>← Volver</button>
+                  style={{padding:"6px 12px",borderRadius:8,border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.07)",color:"#5a7a9a",cursor:"pointer",fontSize:12}}>← Volver</button>
                 <div>
-                  <div style={{color:"#fff",fontWeight:700,fontSize:15}}>{p.icon} {p.titulo}</div>
-                  <div style={{color:"#8aaabb",fontSize:11}}>{p.sub}</div>
+                  <div style={{color:"#1a2f4a",fontWeight:700,fontSize:15}}>{p.icon} {p.titulo}</div>
+                  <div style={{color:"#5a7a9a",fontSize:11}}>{p.sub}</div>
                 </div>
               </div>
 
               {loginError&&<div style={{background:"rgba(231,76,60,.15)",border:"1px solid rgba(231,76,60,.3)",borderRadius:10,padding:"10px 14px",color:"#ff7675",fontSize:12,marginBottom:16}}>⚠ {loginError}</div>}
 
               <form onSubmit={handleSubmit}>
-                <label style={{display:"block",color:"#8aaabb",fontSize:10,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",marginBottom:8}}>
+                <label style={{display:"block",color:"#5a7a9a",fontSize:10,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",marginBottom:8}}>
                   {step==="viewer"?"Código de acceso":"Número de DNI"}
                 </label>
                 <div style={{position:"relative",marginBottom:22}}>
@@ -655,7 +702,7 @@ function LoginScreen({onLogin,loginError,loginLoading}){
                 </button>
               </form>
 
-              <div style={{color:"rgba(138,170,187,.5)",fontSize:11,textAlign:"center",marginTop:18}}>
+              <div style={{color:"#8aaabb",fontSize:11,textAlign:"center",marginTop:18}}>
                 ¿Problemas para ingresar? Contacta al administrador.
               </div>
             </>
@@ -1403,6 +1450,8 @@ function TabUsuarios({S,showToast}){
   const [form,setForm]=useState({nombre:"",dni:"",rol:"disenador"});
   const [saving,setSaving]=useState(false);
   const [search,setSearch]=useState("");
+  const [editUserId,setEditUserId]=useState(null);
+  const [editUserData,setEditUserData]=useState({nombre:"",dni:""});
   const ROLES_U=["admin","disenador","viewer"];
   const ROL_META={
     admin:   {emoji:"👑", label:"Admin",       color:"#f6a623", bg:"#fff8ec"},
@@ -1435,6 +1484,11 @@ function TabUsuarios({S,showToast}){
   const handleToggle=async(id,activo)=>{
     try{await updateDoc(doc(db,"trade_users",id),{activo:!activo});showToast(activo?"⏸ Desactivado":"✅ Activado");}
     catch{showToast("❌ Error");}
+  };
+  const handleGuardarEdit=async(id)=>{
+    if(!editUserData.nombre.trim()||!editUserData.dni.trim()){showToast("⚠ Completa nombre y DNI");return;}
+    try{await updateDoc(doc(db,"trade_users",id),{nombre:editUserData.nombre.trim(),dni:editUserData.dni.trim()});setEditUserId(null);showToast("✅ Usuario actualizado");}
+    catch{showToast("❌ Error al actualizar");}
   };
   const filtrados=usuarios.filter(u=>u.nombre.toLowerCase().includes(search.toLowerCase())||(u.rol||"").toLowerCase().includes(search.toLowerCase()));
   return(
@@ -1475,18 +1529,29 @@ function TabUsuarios({S,showToast}){
           return(
             <div key={u.id} style={{...S.card,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,opacity:u.activo?1:.5}}>
               <div style={{width:40,height:40,borderRadius:10,background:meta.bg,border:"1.5px solid "+meta.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,color:meta.color,flexShrink:0}}>{getIniciales(u.nombre)}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:700,fontSize:13,color:"#1a2f4a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.nombre}</div>
-                <div style={{fontSize:11,color:"#8aaabb",marginTop:1}}>DNI: {"•".repeat(4)+u.dni.slice(-3)}</div>
-              </div>
-              <select value={u.rol} onChange={e=>handleCambiarRol(u.id,e.target.value)}
-                style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid "+meta.color+"40",background:meta.bg,color:meta.color,fontWeight:700,fontSize:11,cursor:"pointer",outline:"none"}}>
-                {ROLES_U.map(r=><option key={r} value={r}>{ROL_META[r].emoji} {ROL_META[r].label}</option>)}
-              </select>
-              <button onClick={()=>handleToggle(u.id,u.activo)}
-                style={{padding:"6px 12px",borderRadius:8,border:"1px solid "+(u.activo?"#fecaca":"#bbf7d0"),background:u.activo?"#fff1f2":"#f0fdf4",color:u.activo?"#dc2626":"#16a34a",cursor:"pointer",fontWeight:700,fontSize:11,whiteSpace:"nowrap"}}>
-                {u.activo?"Pausar":"Activar"}
-              </button>
+              {editUserId===u.id
+                ?<div style={{flex:1,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                  <input value={editUserData.nombre} onChange={e=>setEditUserData(p=>({...p,nombre:e.target.value}))} style={{...S.inp,flex:1,minWidth:120,padding:"6px 10px"}} placeholder="Nombre"/>
+                  <input value={editUserData.dni} onChange={e=>setEditUserData(p=>({...p,dni:e.target.value}))} style={{...S.inp,width:110,padding:"6px 10px"}} placeholder="DNI"/>
+                  <button onClick={()=>handleGuardarEdit(u.id)} style={{padding:"6px 12px",borderRadius:8,border:"none",background:"#00b894",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:11}}>✓</button>
+                  <button onClick={()=>setEditUserId(null)} style={{padding:"6px 10px",borderRadius:8,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:11}}>✕</button>
+                </div>
+                :<div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:"#1a2f4a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.nombre}</div>
+                  <div style={{fontSize:11,color:"#8aaabb",marginTop:1}}>DNI: {"•".repeat(4)+u.dni.slice(-3)}</div>
+                </div>}
+              {editUserId!==u.id&&<>
+                <select value={u.rol} onChange={e=>handleCambiarRol(u.id,e.target.value)}
+                  style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid "+meta.color+"40",background:meta.bg,color:meta.color,fontWeight:700,fontSize:11,cursor:"pointer",outline:"none"}}>
+                  {ROLES_U.map(r=><option key={r} value={r}>{ROL_META[r].emoji} {ROL_META[r].label}</option>)}
+                </select>
+                <button onClick={()=>{setEditUserId(u.id);setEditUserData({nombre:u.nombre,dni:u.dni});}}
+                  style={{padding:"6px 10px",borderRadius:8,border:"1px solid #a29bfe",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontWeight:700,fontSize:11}}>✏️</button>
+                <button onClick={()=>handleToggle(u.id,u.activo)}
+                  style={{padding:"6px 12px",borderRadius:8,border:"1px solid "+(u.activo?"#fecaca":"#bbf7d0"),background:u.activo?"#fff1f2":"#f0fdf4",color:u.activo?"#dc2626":"#16a34a",cursor:"pointer",fontWeight:700,fontSize:11,whiteSpace:"nowrap"}}>
+                  {u.activo?"Pausar":"Activar"}
+                </button>
+              </>}
             </div>
           );
         })}
@@ -1499,7 +1564,7 @@ function TabUsuarios({S,showToast}){
 /* ══ TAB CONFIG — SIN TAB USUARIOS ═════════════════════ */
 function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNewTipo,newDis,setNewDis,showNewT,setShowNewT,showNewD,setShowNewD,showToast}){
   /* 4 tabs: Tipos · Diseñadores · Áreas · Usuarios */
-  const tabs=["📦 Tipos de trabajo","👥 Diseñadores","📐 Áreas","👤 Usuarios"];
+  const tabs=["📦 Tipos de trabajo","📐 Áreas","👤 Usuarios"];
   const tipos=config.tipos||[];
   const dis=config.disenadores||[];
   const areas=config.areas||AREAS_DEFAULT;
@@ -1559,10 +1624,10 @@ function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNe
         </div>
       )}
 
-      {cfgTab===1&&<DisenaoresPanel S={S} dis={dis} config={config} saveConfig={saveConfig} showNewD={showNewD} setShowNewD={setShowNewD} newDis={newDis} setNewDis={setNewDis} showToast={showToast}/>}
-      {cfgTab===3&&<TabUsuarios S={S} showToast={showToast}/>}
 
-      {cfgTab===2&&(
+      {cfgTab===2&&<TabUsuarios S={S} showToast={showToast}/>}
+
+      {cfgTab===1&&(
         <div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
             <div><div style={{fontWeight:800,fontSize:14,color:"#1a2f4a"}}>Áreas solicitantes</div><div style={{fontSize:11,color:"#8aaabb",marginTop:2}}>{areas.length} registradas</div></div>
