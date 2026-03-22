@@ -513,12 +513,12 @@ export default function TradeApp() {
       tipo:"",fechaInicio:"",horaInicio:"",fechaEntrega:"",horaCorte:"",hEst:"",objetivo:"",publico:"",mensaje:"",
       mecanica:"",materiales:[],medidas:"",tono:"",restricciones:"",
       comentarios:"",recursos:"",productosInvolucrados:"",
-      responableId:"",responableNombre:""};
+      responableId:"",responableNombre:"",notificarA:[]};
   }
 
   /* ── Guardar actividad ── */
   const guardarSolicitud=async()=>{
-    if(!brief.titulo||!brief.tipo||!brief.fechaEntrega){showToast("⚠ Completa título, tipo y fecha de entrega");return;}
+    if(!brief.titulo||!brief.tipo||(!isViewer&&!brief.fechaEntrega)){showToast("⚠ Completa título y tipo");return;}
     const id=briefEdit||"ACT-"+Date.now();
     const now2=new Date().toISOString();
     const existing=solicitudes.find(s=>s.id===briefEdit);
@@ -555,24 +555,15 @@ export default function TradeApp() {
           setPanelNotif({nombre:dis.nombre,telefono:dis.telefono||"",email:dis.email||"",msgWA:msg,asunto,cuerpoEmail,titulo:data.titulo,reqId:data.id});
         }
       } else if(!data.responableId && !esPrioritaria) {
-        // Caso 2: otras áreas SIN diseñador → panel para notificar a admins Trade por email
-        const admins = tradeUsers.filter(u=>u.rol==="admin" && u.activo!==false && u.email);
+        // Caso 2: Visor u otras áreas SIN diseñador → email automático a admins Trade
+        const notificarIds = data.notificarA&&data.notificarA.length>0 ? data.notificarA : null;
+        const admins = tradeUsers.filter(u=>u.rol==="admin" && u.activo!==false && u.email && (!notificarIds||notificarIds.includes(u.id)));
         if(admins.length>0) {
           const emails = admins.map(u=>u.email);
           const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
           const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño pendiente de asignación.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app?logout=1";
-          const nombresAdmins = admins.map(u=>u.nombre).join(", ");
-          setPanelNotif({
-            nombre:"Equipo Trade ("+nombresAdmins+")",
-            telefono:"",
-            email:emails.join(","),
-            msgWA:"",
-            asunto,
-            cuerpoEmail:cuerpo,
-            titulo:data.titulo,
-            reqId:data.id,
-            esOtraArea:true,
-          });
+          // Enviar email automáticamente — el visor no necesita hacer nada más
+          setTimeout(()=>abrirEmail(emails, asunto, cuerpo), 500);
         }
       }
     }
@@ -726,6 +717,8 @@ export default function TradeApp() {
     ?[{i:0,label:"📋 Actividades"},{i:1,label:"📝 Nueva actividad"},{i:2,label:"🎨 Kanban"},{i:3,label:"📊 Dashboard"},{i:4,label:"⚙️ Config"}]
     :isDisenador
     ?[{i:0,label:"📋 Mis trabajos"},{i:2,label:"🎨 Kanban"},{i:3,label:"📊 Dashboard"}]
+    :isViewer
+    ?[{i:1,label:"📝 Nueva solicitud"},{i:3,label:"📊 Dashboard"}]
     :[{i:3,label:"📊 Dashboard"}];
 
   return(
@@ -764,7 +757,7 @@ export default function TradeApp() {
 
       <div style={{padding:"16px 24px",maxWidth:"100%",boxSizing:"border-box"}}>
         {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName} resolverResp={resolverResp} tradeUsers={tradeUsers} iniciarTrabajo={iniciarTrabajo}/>}
-        {tab===1&&isAdmin&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes}/>}
+        {tab===1&&(isAdmin||isViewer)&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} isViewer={isViewer} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes}/>}
         {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} iniciarTrabajo={iniciarTrabajo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
         {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador} tradeUsers={tradeUsers}/>}
         {tab===4&&isAdmin&&<TabConfig S={S} config={config} setConfig={setConfig} saveConfig={saveConfig} cfgTab={cfgTab} setCfgTab={setCfgTab} newTipo={newTipo} setNewTipo={setNewTipo} newDis={newDis} setNewDis={setNewDis} showNewT={showNewT} setShowNewT={setShowNewT} showNewD={showNewD} setShowNewD={setShowNewD} showToast={showToast}/>}
@@ -1286,20 +1279,25 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
 }
 
 /* ══ TAB BRIEF ══════════════════════════════════════════ */
-function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onCancel,solicitudes}){
+function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,isViewer,editMode,onCancel,solicitudes}){
   const tipos=config.tipos||[];
   const areas=config.areas||AREAS_DEFAULT;
   const set=(k,v)=>setBrief(p=>({...p,[k]:v}));
   const toggleMat=(m)=>setBrief(p=>({...p,materiales:p.materiales.includes(m)?p.materiales.filter(x=>x!==m):[...p.materiales,m]}));
   const [disenadoresUsers,setDisenadoresUsers]=useState([]);
+  const [tradeAdmins,setTradeAdmins]=useState([]);
   useEffect(()=>{
     const unsub=onSnapshot(query(collection(db,"trade_users"),where("rol","==","disenador"),where("activo","==",true)),snap=>{
       const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));
       setDisenadoresUsers(arr);
     });
-    return()=>unsub();
+    const unsub2=onSnapshot(query(collection(db,"trade_users"),where("rol","==","admin"),where("activo","==",true)),snap=>{
+      const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));
+      setTradeAdmins(arr);
+    });
+    return()=>{unsub();unsub2();};
   },[]);
-  const disenadoresList = disenadoresUsers.length>0 ? disenadoresUsers : [].filter(d=>d.activo!==false);
+  const disenadoresList = disenadoresUsers.length>0 ? disenadoresUsers : [];
   return(
     <div style={{maxWidth:"100%"}}>
       <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:17,color:"#1a2f4a",marginBottom:3}}>{editMode?"Editar actividad":"Nueva actividad de diseño"}</div>
@@ -1311,12 +1309,31 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
           <div><label style={S.lbl}>SOLICITANTE</label><input value={brief.solicitante} onChange={e=>set("solicitante",e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>ÁREA</label><select value={brief.area} onChange={e=>set("area",e.target.value)} style={S.inp}>{areas.map(a=><option key={a}>{a}</option>)}</select></div>
           <div><label style={S.lbl}>FECHA INICIO <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.fechaInicio} onChange={e=>set("fechaInicio",e.target.value)} style={S.inp}/></div>
-          <div><label style={S.lbl}>FECHA ENTREGA <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.fechaEntrega} onChange={e=>set("fechaEntrega",e.target.value)} style={S.inp}/></div>
-          <div><label style={S.lbl}>HORA DE INICIO</label><input type="time" value={brief.horaInicio} onChange={e=>set("horaInicio",e.target.value)} style={S.inp}/></div>
-          <div><label style={S.lbl}>HORA DE CORTE <span style={{fontSize:9,color:"#8aaabb",fontWeight:400}}>(pasada esta hora → retraso)</span></label><input type="time" value={brief.horaCorte} onChange={e=>set("horaCorte",e.target.value)} style={S.inp}/></div>
+          {!isViewer&&<div><label style={S.lbl}>FECHA ENTREGA <span style={{color:"#e17055"}}>*</span></label><input type="date" value={brief.fechaEntrega} onChange={e=>set("fechaEntrega",e.target.value)} style={S.inp}/></div>}
+          {!isViewer&&<div><label style={S.lbl}>HORA DE INICIO</label><input type="time" value={brief.horaInicio} onChange={e=>set("horaInicio",e.target.value)} style={S.inp}/></div>}
+          {!isViewer&&<div><label style={S.lbl}>HORA DE CORTE <span style={{fontSize:9,color:"#8aaabb",fontWeight:400}}>(pasada esta hora → retraso)</span></label><input type="time" value={brief.horaCorte} onChange={e=>set("horaCorte",e.target.value)} style={S.inp}/></div>}
           <div><label style={S.lbl}>PRIORIDAD</label><select value={brief.prioridad} onChange={e=>set("prioridad",e.target.value)} style={S.inp}>{["Normal","Media","Alta","Urgente"].map(p=><option key={p}>{p}</option>)}</select></div>
-          <div style={{gridColumn:"1/-1"}}>
-            <label style={S.lbl}>RESPONSABLE <span style={{color:"#8aaabb",fontWeight:400}}>(opcional — asigna directamente al diseñador)</span></label>
+          {isViewer&&<div style={{gridColumn:"1/-1"}}>
+            <label style={S.lbl}>NOTIFICAR A <span style={{color:"#e17055"}}>*</span> <span style={{color:"#8aaabb",fontWeight:400}}>(selecciona quién del equipo Trade recibirá tu solicitud)</span></label>
+            <div style={{display:"flex",flexDirection:"column",gap:7}}>
+              {tradeAdmins.map(u=>(
+                <label key={u.id} onClick={()=>{const arr=brief.notificarA||[];set("notificarA",arr.includes(u.id)?arr.filter(x=>x!==u.id):[...arr,u.id]);}}
+                  style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+((brief.notificarA||[]).includes(u.id)?"#6c5ce7":"#e2e8f0"),background:(brief.notificarA||[]).includes(u.id)?"#f0edff":"#fff",cursor:"pointer"}}>
+                  <div style={{width:28,height:28,borderRadius:"50%",background:"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:700,flexShrink:0}}>{getIniciales(u.nombre)}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:700,color:(brief.notificarA||[]).includes(u.id)?"#6c5ce7":"#1a2f4a"}}>{u.nombre}</div>
+                    <div style={{fontSize:10,color:"#8aaabb"}}>{u.area||"Trade Marketing"} · {u.email||"sin correo"}</div>
+                  </div>
+                  <div style={{width:18,height:18,borderRadius:4,border:"2px solid "+((brief.notificarA||[]).includes(u.id)?"#6c5ce7":"#c8d8e8"),background:(brief.notificarA||[]).includes(u.id)?"#6c5ce7":"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    {(brief.notificarA||[]).includes(u.id)&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}
+                  </div>
+                </label>
+              ))}
+              {(brief.notificarA||[]).length===0&&<div style={{fontSize:11,color:"#e17055",padding:"6px 0"}}>⚠ Selecciona al menos una persona</div>}
+            </div>
+          </div>}
+          {!isViewer&&<div style={{gridColumn:"1/-1"}}>
+            <label style={S.lbl}>RESPONSABLE <span style={{color:"#8aaabb",fontWeight:400}}>(solo admin — asigna al diseñador)</span></label>
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               <label onClick={()=>set("responableId","")} style={{display:"flex",alignItems:"center",gap:7,padding:"9px 14px",borderRadius:10,border:"1.5px solid "+(brief.responableId===""?"#6c5ce7":"#e2e8f0"),background:brief.responableId===""?"#f0edff":"#fff",cursor:"pointer",fontSize:12,color:brief.responableId===""?"#6c5ce7":"#5a7a9a",fontWeight:brief.responableId===""?700:400}}>
                 <input type="radio" name="resp" checked={brief.responableId===""} onChange={()=>set("responableId","")} style={{display:"none"}}/>
@@ -1348,7 +1365,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
                 );
               })}
             </div>
-          </div>
+          </div>}
         </div>
       </div>
       <div style={{...S.card,padding:18,marginBottom:12}}>
