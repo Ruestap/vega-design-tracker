@@ -657,7 +657,7 @@ export default function TradeApp() {
       <div style={{padding:"16px 24px",maxWidth:"100%",boxSizing:"border-box"}}>
         {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
         {tab===1&&isAdmin&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes}/>}
-        {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast}/>}
+        {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
         {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador}/>}
         {tab===4&&isAdmin&&<TabConfig S={S} config={config} setConfig={setConfig} saveConfig={saveConfig} cfgTab={cfgTab} setCfgTab={setCfgTab} newTipo={newTipo} setNewTipo={setNewTipo} newDis={newDis} setNewDis={setNewDis} showNewT={showNewT} setShowNewT={setShowNewT} showNewD={showNewD} setShowNewD={setShowNewD} showToast={showToast}/>}
       </div>
@@ -1051,7 +1051,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
           <div style={{...S.card,padding:26,width:"90%",maxWidth:400}}>
             <div style={{fontWeight:800,fontSize:15,color:"#1a2f4a",marginBottom:4}}>Asignar responsable</div>
             <div style={{fontSize:12,color:"#5a7a9a",marginBottom:16}}>{assignModal.titulo}</div>
-            {(config.disenadores||[]).filter(d=>d.activo!==false).map(d=>(
+            {(tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[])).map(d=>(
               <button key={d.id} onClick={()=>{asignarDis(assignModal.id,d.id);setAssignModal(null);}}
                 style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"11px 14px",borderRadius:11,border:"1px solid #e2e8f0",background:"#fff",cursor:"pointer",marginBottom:7,textAlign:"left"}}>
                 <div style={{width:32,height:32,borderRadius:"50%",background:d.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",fontWeight:700}}>{d.iniciales||getIniciales(d.nombre)}</div>
@@ -1235,7 +1235,7 @@ function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,ed
 }
 
 /* ══ TAB KANBAN ════════════════════════════════════════ */
-function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarListo,aprobarEntrega,rechazarEntrega,uName,showToast}){
+function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarListo,aprobarEntrega,rechazarEntrega,uName,showToast,resolverResp,tradeUsers}){
   const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
   const tipos=config.tipos||[];
   const [assignModal,setAssignModal]=useState(null);
@@ -1410,13 +1410,13 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
               {retrasadas.length===0&&<div style={{fontSize:12,color:"#b2bec3",textAlign:"center",padding:"20px 0"}}>Sin retrasos ✅</div>}
             </div>
           </div>
-          <GanttDiario S={S} solicitudes={solicitudes} config={config} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} showResp={false}/>
+          <GanttDiario S={S} solicitudes={solicitudes} config={config} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} showResp={false} tradeUsers={tradeUsers}/>
         </div>
       )}
 
       {dashLvl===2&&(
         <div>
-          <GanttDiario S={S} solicitudes={solicitudes} config={config} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} showResp={true}/>
+          <GanttDiario S={S} solicitudes={solicitudes} config={config} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} showResp={true} tradeUsers={tradeUsers}/>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
             <div style={{...S.card,padding:16}}>
               <div style={{fontWeight:800,fontSize:13,color:"#e17055",marginBottom:12}}>Causa raíz de retrasos</div>
@@ -1486,9 +1486,9 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
 }
 
 /* ══ GANTT DIARIO ════════════════════════════════════════ */
-function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,showResp}){
+function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,showResp,tradeUsers}){
   const dias=diasEnMes(gYear,gMonth);
-  const dis=config.disenadores||[];
+   const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
   const tipos=config.tipos||[];
   const hoy=todayStr();
   const navMes=dir=>{let m=gMonth+dir,y=gYear;if(m<0){m=11;y--;}if(m>11){m=0;y++;}setGMonth(m);setGYear(y);};
@@ -1838,7 +1838,7 @@ function TabConfig({S,config,setConfig,saveConfig,cfgTab,setCfgTab,newTipo,setNe
   /* 4 tabs: Tipos · Diseñadores · Áreas · Usuarios */
   const tabs=["📦 Tipos de trabajo","📐 Áreas",<span style={{display:"flex",alignItems:"center",gap:4}}><svg width="16" height="16" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{display:"inline-block",verticalAlign:"middle",marginRight:5}}><circle cx="42" cy="32" r="22" fill="#3D5A9E"/><path d="M4 88 Q4 60 42 60 Q80 60 80 88" fill="#3D5A9E"/><circle cx="75" cy="30" r="22" fill="#64D6F5"/><polyline points="63,30 71,39 88,20" fill="none" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/></svg>Usuarios</span>];
   const tipos=config.tipos||[];
-  const dis=config.disenadores||[];
+   const dis=[];
   const areas=config.areas||AREAS_DEFAULT;
   const [newArea,setNewArea]=useState("");
   const [editArea,setEditArea]=useState(null);
