@@ -349,7 +349,6 @@ export default function TradeApp() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [config, setConfig] = useState({
     tipos: TIPOS_DEFAULT,
-    disenadores: DISENADORES_DEFAULT, // [] — se carga desde Firestore
     areas: AREAS_DEFAULT,
   });
 
@@ -497,7 +496,7 @@ export default function TradeApp() {
   /* ── Acciones de estado ── */
   const asignarDis=async(reqId,disId)=>{
     const req=solicitudes.find(s=>s.id===reqId);if(!req)return;
-    const dis=config.disenadores.find(d=>d.id===disId);
+    const dis=tradeUsers.find(d=>d.id===disId)||{nombre:disId};
     await setDoc(doc(db,"trade_solicitudes",reqId),{
       ...req,responableId:disId,responableNombre:dis?.nombre||disId,
       stat:"en_diseno",tsAsignado:new Date().toISOString(),updatedAt:new Date().toISOString(),
@@ -656,7 +655,7 @@ export default function TradeApp() {
       </div>
 
       <div style={{padding:"16px 24px",maxWidth:"100%",boxSizing:"border-box"}}>
-        {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName}/>}
+        {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
         {tab===1&&isAdmin&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes}/>}
         {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast}/>}
         {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador}/>}
@@ -884,13 +883,13 @@ function LoginScreen({onLogin,loginError,loginLoading}){
 }
 
 /* ══ TAB ACTIVIDADES ════════════════════════════════════ */
-function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo,fResp,setFResp,busq,setBusq,isAdmin,isDisenador,asignarDis,aprobarEntrega,rechazarEntrega,eliminarSolicitud,editarActividad,showToast,uName}){
+function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo,fResp,setFResp,busq,setBusq,isAdmin,isDisenador,asignarDis,aprobarEntrega,rechazarEntrega,eliminarSolicitud,editarActividad,showToast,uName,resolverResp,tradeUsers}){
   const [assignModal,setAssignModal]=useState(null);
   const [rejectModal,setRejectModal]=useState(null);
   const [rejectMotivo,setRejectMotivo]=useState("");
   const [delModal,setDelModal]=useState(null);
   const tipos=config.tipos||[];
-  const dis=config.disenadores||[];
+  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
 
   return(
     <div>
@@ -946,7 +945,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
               {solicitudes.length===0&&<tr><td colSpan={8} style={{textAlign:"center",padding:36,color:"#b2bec3"}}>Sin actividades — crea la primera con "＋ Nueva actividad"</td></tr>}
               {solicitudes.map(req=>{
                 const tipo=tipos.find(t=>t.id===req.tipo);
-                const resp=resolverResp?resolverResp(req.responableId,req.responableNombre):dis.find(d=>d.id===req.responableId);
+                const resp=resolverResp?resolverResp(req.responableId,req.responableNombre):(dis.find(d=>d.id===req.responableId)||null);
                 const c=STAT_C[req.stat]||"#b2bec3";
                 const hoy=todayStr();
                 const vencida=req.deadline&&hoy>req.deadline&&!["entregado","cancelado"].includes(req.stat);
@@ -1237,7 +1236,7 @@ function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,ed
 
 /* ══ TAB KANBAN ════════════════════════════════════════ */
 function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarListo,aprobarEntrega,rechazarEntrega,uName,showToast}){
-  const dis=config.disenadores||[];
+  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
   const tipos=config.tipos||[];
   const [assignModal,setAssignModal]=useState(null);
   const [rejectModal,setRejectModal]=useState(null);
@@ -1287,7 +1286,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {items.map(req=>{
                   const tipo=tipos.find(t=>t.id===req.tipo);
-                  const resp=resolverResp?resolverResp(req.responableId,req.responableNombre):dis.find(d=>d.id===req.responableId);
+                  const resp=resolverResp?resolverResp(req.responableId,req.responableNombre):(dis.find(d=>d.id===req.responableId)||null);
                   const c=STAT_C[req.stat]||"#b2bec3";
                   const vencida=req.deadline&&todayStr()>req.deadline&&!["entregado","cancelado"].includes(req.stat);
                   return(
@@ -1354,7 +1353,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
 
 /* ══ TAB DASHBOARD ══════════════════════════════════════ */
 function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,isDisenador}){
-  const dis=config.disenadores||[];
+  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):(config.disenadores||[]);
   const tipos=config.tipos||[];
   const hoy=todayStr();
   const vencen7=solicitudes.filter(s=>s.deadline&&!["entregado","cancelado"].includes(s.stat)&&new Date(s.deadline)>=new Date(hoy)&&new Date(s.deadline)-new Date(hoy)<=7*86400000);
