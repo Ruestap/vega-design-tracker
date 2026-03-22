@@ -194,30 +194,57 @@ function calcDiasRetraso(fechaStr) {
 }
 
 function getDisponibilidad(disId, solicitudes, fechaNueva, horaCorteNueva, disNombre) {
-  // Cruza por ID (trade_users) O por nombre (config.disenadores) para compatibilidad
+  const hoy = todayStr();
+  const manana = new Date(); manana.setDate(manana.getDate()+1);
+  const mananaStr = manana.toISOString().slice(0,10);
+
   const activas = solicitudes.filter(s =>
     (s.responableId === disId || (disNombre && s.responableNombre === disNombre)) &&
     ["en_diseno","aprobacion","pendiente"].includes(s.stat)
   );
-  if(activas.length === 0) return {nivel:"libre", msg:"Disponible · sin tareas activas", activos:0};
+  if(activas.length === 0) return {nivel:"libre", msg:"Disponible · sin tareas activas", activos:0, bloquear:false};
 
-  // Verificar cruce de fechas con la nueva tarea
-  if(fechaNueva && horaCorteNueva) {
-    const nuevaFin = new Date(fechaNueva + "T" + horaCorteNueva + ":00");
-    const conflictos = activas.filter(s => {
-      if(!s.fechaEntrega) return false;
-      const h = s.horaCorte || "18:30";
-      const fin = new Date(s.fechaEntrega + "T" + h + ":00");
-      return fin >= nuevaFin || s.fechaEntrega === fechaNueva;
-    });
-    if(conflictos.length > 0) {
-      const ultima = conflictos[0];
-      return {nivel:"ocupado", msg:"Ocupado hasta "+( ultima.fechaEntrega||"?")+( ultima.horaCorte?" "+ultima.horaCorte:"")+" · puede haber conflicto", activos:activas.length};
+  // Ordenar por fecha de entrega más próxima
+  const ordenadas = [...activas].sort((a,b)=>{
+    const fa = a.fechaEntrega||"9999"; const fb = b.fechaEntrega||"9999";
+    return fa.localeCompare(fb);
+  });
+  const proxima = ordenadas[0];
+  const fechaProx = proxima.fechaEntrega || "";
+  const horaProx = proxima.horaCorte || "18:30";
+  const finProx = fechaProx ? new Date(fechaProx+"T"+horaProx+":00") : null;
+
+  // REGLA 1: Tiene tarea venciendo hoy o mañana → OCUPADO, no asignable
+  // salvo que la nueva tarea empiece DESPUÉS del cierre de la pendiente
+  const venceHoyOManana = fechaProx === hoy || fechaProx === mananaStr;
+
+  if(venceHoyOManana) {
+    // Verificar si la nueva tarea puede empezar después del cierre
+    if(fechaNueva && finProx) {
+      const nuevaInicio = new Date(fechaNueva+"T"+(horaCorteNueva||"08:30")+":00");
+      if(nuevaInicio > finProx) {
+        // La nueva tarea comienza después del cierre → permitir pero advertir
+        return {nivel:"ocupado", msg:"Libre desde "+fechaProx+" "+horaProx+" · cierra tarea actual primero", activos:activas.length, bloquear:false};
+      }
+    }
+    return {nivel:"sobrecargado", msg:"Ocupado · entrega pendiente "+fechaProx+" a las "+horaProx+" · no asignable", activos:activas.length, bloquear:true};
+  }
+
+  // REGLA 2: Tiene 2+ activas → advertencia
+  if(activas.length >= 2) {
+    return {nivel:"ocupado", msg:"Sobrecargado · "+activas.length+" tareas activas · última entrega "+fechaProx, activos:activas.length, bloquear:false};
+  }
+
+  // REGLA 3: Tiene 1 activa con fecha futura → disponible con info
+  // Pero si la nueva tarea se cruza con la pendiente → advertir
+  if(fechaNueva && finProx) {
+    const nuevaFin = new Date(fechaNueva+"T"+(horaCorteNueva||"18:30")+":00");
+    if(nuevaFin <= finProx) {
+      return {nivel:"ocupado", msg:"Conflicto · la nueva tarea vence antes que la pendiente ("+fechaProx+")", activos:activas.length, bloquear:false};
     }
   }
-  if(activas.length >= 2) return {nivel:"sobrecargado", msg:"Sobrecargado · "+activas.length+" tareas activas que vencen pronto", activos:activas.length};
-  const prox = activas[0];
-  return {nivel:"libre", msg:"Disponible · última entrega "+(prox.fechaEntrega||"sin fecha"), activos:activas.length};
+
+  return {nivel:"libre", msg:"Disponible · última entrega "+fechaProx, activos:activas.length, bloquear:false};
 }
 
 function calcHHManual(req) {
@@ -1099,8 +1126,8 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
                 const bC=disp.nivel==="libre"?"#00b894":disp.nivel==="ocupado"?"#f6a623":"#e17055";
                 const selC=brief.responableId===d.id?"#6c5ce7":"#e2e8f0";
                 return(
-                <div key={d.id} style={{border:"1.5px solid "+(brief.responableId===d.id?"#6c5ce7":"#e2e8f0"),borderRadius:10,overflow:"hidden",cursor:"pointer",background:brief.responableId===d.id?"#f0edff":"#fff"}}
-                  onClick={()=>{set("responableId",d.id);set("responableNombre",d.nombre);}}>
+                <div key={d.id} style={{border:"1.5px solid "+(disp.bloquear?"#fecaca":brief.responableId===d.id?"#6c5ce7":"#e2e8f0"),borderRadius:10,overflow:"hidden",cursor:disp.bloquear?"not-allowed":"pointer",background:disp.bloquear?"#fff5f5":brief.responableId===d.id?"#f0edff":"#fff",opacity:disp.bloquear?0.7:1}}
+                  onClick={()=>{if(disp.bloquear){return;}set("responableId",d.id);set("responableNombre",d.nombre);}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,padding:"9px 14px"}}>
                     <input type="radio" name="resp" checked={brief.responableId===d.id} onChange={()=>{set("responableId",d.id);set("responableNombre",d.nombre);}} style={{display:"none"}}/>
                     <div style={{position:"relative",flexShrink:0}}>
