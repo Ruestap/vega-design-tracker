@@ -193,6 +193,33 @@ function calcDiasRetraso(fechaStr) {
   return Math.ceil((new Date(todayStr())-new Date(fechaStr))/86400000);
 }
 
+function getDisponibilidad(disId, solicitudes, fechaNueva, horaCorteNueva) {
+  // Retorna: {nivel:"libre"|"ocupado"|"sobrecargado", msg:string, activos:number}
+  const activas = solicitudes.filter(s =>
+    s.responableId === disId &&
+    ["en_diseno","aprobacion","pendiente"].includes(s.stat)
+  );
+  if(activas.length === 0) return {nivel:"libre", msg:"Disponible · sin tareas activas", activos:0};
+
+  // Verificar cruce de fechas con la nueva tarea
+  if(fechaNueva && horaCorteNueva) {
+    const nuevaFin = new Date(fechaNueva + "T" + horaCorteNueva + ":00");
+    const conflictos = activas.filter(s => {
+      if(!s.fechaEntrega) return false;
+      const h = s.horaCorte || "18:30";
+      const fin = new Date(s.fechaEntrega + "T" + h + ":00");
+      return fin >= nuevaFin || s.fechaEntrega === fechaNueva;
+    });
+    if(conflictos.length > 0) {
+      const ultima = conflictos[0];
+      return {nivel:"ocupado", msg:"Ocupado hasta "+( ultima.fechaEntrega||"?")+( ultima.horaCorte?" "+ultima.horaCorte:"")+" · puede haber conflicto", activos:activas.length};
+    }
+  }
+  if(activas.length >= 2) return {nivel:"sobrecargado", msg:"Sobrecargado · "+activas.length+" tareas activas que vencen pronto", activos:activas.length};
+  const prox = activas[0];
+  return {nivel:"libre", msg:"Disponible · última entrega "+(prox.fechaEntrega||"sin fecha"), activos:activas.length};
+}
+
 function calcHHManual(req) {
   // Calcula HH desde fechaInicio+horaInicio hasta fechaEntrega+horaCorte
   // L-V 08:30-18:30, Sab 08:30-11:30
@@ -596,7 +623,7 @@ export default function TradeApp() {
         {tab===4&&isAdmin&&<TabConfig S={S} config={config} setConfig={setConfig} saveConfig={saveConfig} cfgTab={cfgTab} setCfgTab={setCfgTab} newTipo={newTipo} setNewTipo={setNewTipo} newDis={newDis} setNewDis={setNewDis} showNewT={showNewT} setShowNewT={setShowNewT} showNewD={showNewD} setShowNewD={setShowNewD} showToast={showToast}/>}
       </div>
 
-      {briefModal&&<BriefModal S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} onClose={()=>{setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());}} isAdmin={isAdmin} editMode={!!briefEdit}/>}
+      {briefModal&&<BriefModal S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} onClose={()=>{setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());}} isAdmin={isAdmin} editMode={!!briefEdit} solicitudes={solicitudes}/>}
       {toast&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:"#1a2f4a",color:"#fff",padding:"11px 22px",borderRadius:24,fontSize:13,fontWeight:700,zIndex:99,boxShadow:"0 6px 24px rgba(0,0,0,.25)",whiteSpace:"nowrap"}}>{toast}</div>}
     </div>
   );
@@ -1030,7 +1057,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
 }
 
 /* ══ TAB BRIEF ══════════════════════════════════════════ */
-function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onCancel}){
+function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onCancel,solicitudes}){
   const tipos=config.tipos||[];
   const areas=config.areas||AREAS_DEFAULT;
   const set=(k,v)=>setBrief(p=>({...p,[k]:v}));
@@ -1052,17 +1079,36 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,editMode,onC
           <div><label style={S.lbl}>PRIORIDAD</label><select value={brief.prioridad} onChange={e=>set("prioridad",e.target.value)} style={S.inp}>{["Normal","Media","Alta","Urgente"].map(p=><option key={p}>{p}</option>)}</select></div>
           <div style={{gridColumn:"1/-1"}}>
             <label style={S.lbl}>RESPONSABLE <span style={{color:"#8aaabb",fontWeight:400}}>(opcional — asigna directamente al diseñador)</span></label>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              <label onClick={()=>set("responableId","")} style={{display:"flex",alignItems:"center",gap:7,padding:"8px 14px",borderRadius:10,border:"1.5px solid "+(brief.responableId===""?"#6c5ce7":"#e2e8f0"),background:brief.responableId===""?"#f0edff":"#fff",cursor:"pointer",fontSize:12,color:brief.responableId===""?"#6c5ce7":"#5a7a9a",fontWeight:brief.responableId===""?700:400}}>
-                <input type="radio" name="resp" checked={brief.responableId===""} onChange={()=>set("responableId","")} style={{display:"none"}}/>Sin asignar
+            <div style={{display:"flex",flexDirection:"column",gap:7}}>
+              <label onClick={()=>set("responableId","")} style={{display:"flex",alignItems:"center",gap:7,padding:"9px 14px",borderRadius:10,border:"1.5px solid "+(brief.responableId===""?"#6c5ce7":"#e2e8f0"),background:brief.responableId===""?"#f0edff":"#fff",cursor:"pointer",fontSize:12,color:brief.responableId===""?"#6c5ce7":"#5a7a9a",fontWeight:brief.responableId===""?700:400}}>
+                <input type="radio" name="resp" checked={brief.responableId===""} onChange={()=>set("responableId","")} style={{display:"none"}}/>
+                <div style={{width:26,height:26,borderRadius:"50%",background:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>—</div>
+                <span>Sin asignar</span>
               </label>
-              {(config.disenadores||[]).filter(d=>d.activo!==false).map(d=>(
-                <label key={d.id} onClick={()=>{set("responableId",d.id);set("responableNombre",d.nombre);}} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 14px",borderRadius:10,border:"1.5px solid "+(brief.responableId===d.id?"#6c5ce7":"#e2e8f0"),background:brief.responableId===d.id?"#f0edff":"#fff",cursor:"pointer"}}>
-                  <input type="radio" name="resp" checked={brief.responableId===d.id} onChange={()=>{set("responableId",d.id);set("responableNombre",d.nombre);}} style={{display:"none"}}/>
-                  <div style={{width:26,height:26,borderRadius:"50%",background:d.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:700,flexShrink:0}}>{d.iniciales||getIniciales(d.nombre)}</div>
-                  <span style={{fontSize:12,fontWeight:brief.responableId===d.id?700:400,color:brief.responableId===d.id?"#6c5ce7":"#1a2f4a"}}>{d.nombre}</span>
-                </label>
-              ))}
+              {(config.disenadores||[]).filter(d=>d.activo!==false).map(d=>{
+                const disp=getDisponibilidad(d.id,solicitudes||[],brief.fechaEntrega,brief.horaCorte);
+                const bC=disp.nivel==="libre"?"#00b894":disp.nivel==="ocupado"?"#f6a623":"#e17055";
+                const selC=brief.responableId===d.id?"#6c5ce7":"#e2e8f0";
+                return(
+                <div key={d.id} style={{border:"1.5px solid "+(brief.responableId===d.id?"#6c5ce7":"#e2e8f0"),borderRadius:10,overflow:"hidden",cursor:"pointer",background:brief.responableId===d.id?"#f0edff":"#fff"}}
+                  onClick={()=>{set("responableId",d.id);set("responableNombre",d.nombre);}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"9px 14px"}}>
+                    <input type="radio" name="resp" checked={brief.responableId===d.id} onChange={()=>{set("responableId",d.id);set("responableNombre",d.nombre);}} style={{display:"none"}}/>
+                    <div style={{position:"relative",flexShrink:0}}>
+                      <div style={{width:30,height:30,borderRadius:"50%",background:d.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",fontWeight:700}}>{d.iniciales||getIniciales(d.nombre)}</div>
+                      <div style={{position:"absolute",bottom:-1,right:-1,width:10,height:10,borderRadius:"50%",background:bC,border:"2px solid #fff"}}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:700,color:brief.responableId===d.id?"#6c5ce7":"#1a2f4a"}}>{d.nombre}</div>
+                      <div style={{fontSize:10,color:bC,fontWeight:600}}>{disp.msg}</div>
+                    </div>
+                    {disp.activos>0&&<div style={{padding:"2px 8px",borderRadius:20,background:bC+"18",color:bC,fontSize:10,fontWeight:700}}>{disp.activos} activa{disp.activos!==1?"s":""}</div>}
+                  </div>
+                  {disp.nivel==="sobrecargado"&&<div style={{padding:"5px 14px",background:"#fff1ee",borderTop:"1px solid #fecdc7",fontSize:10,color:"#e17055",fontWeight:600}}>⚠ Sobrecargado — considera reasignar o ajustar fecha</div>}
+                  {disp.nivel==="ocupado"&&<div style={{padding:"5px 14px",background:"#fff8ec",borderTop:"1px solid #fde68a",fontSize:10,color:"#92400e",fontWeight:600}}>⚡ Tiene tareas que se cruzan con esta fecha de entrega</div>}
+                </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1124,7 +1170,7 @@ function SectionHeader({n,label,color}){
   );
 }
 
-function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,editMode}){
+function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,editMode,solicitudes}){
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(26,47,74,.65)",display:"flex",alignItems:"flex-start",justifyContent:"center",zIndex:50,backdropFilter:"blur(4px)",padding:"20px 16px",overflowY:"auto"}}>
       <div style={{...S.card,width:"100%",maxWidth:740,padding:0,position:"relative"}}>
@@ -1133,7 +1179,7 @@ function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,ed
           <button onClick={onClose} style={{padding:"5px 12px",borderRadius:8,border:"1px solid #c8d8e8",background:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>✕ Cerrar</button>
         </div>
         <div style={{padding:20,maxHeight:"80vh",overflowY:"auto"}}>
-          <TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={editMode} onCancel={onClose}/>
+          <TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={editMode} onCancel={onClose} solicitudes={solicitudes}/>
         </div>
       </div>
     </div>
