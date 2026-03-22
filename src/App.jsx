@@ -63,7 +63,6 @@ const TIPOS_DEFAULT = [
   {id:"creativo",  n:"Creativo (brief)",   e:"⭐", hEst:10,  activo:true},
 ];
 
-const DISENADORES_DEFAULT = []; // Se carga desde Firestore
 
 const AREAS_DEFAULT = ["Trade Marketing","Comercial","Marketing","Operaciones","Gerencia","Otra"];
 const TONOS     = ["Corporativo","Emocional","Promocional","Divertido","Impactante"];
@@ -885,7 +884,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
   const [rejectMotivo,setRejectMotivo]=useState("");
   const [delModal,setDelModal]=useState(null);
   const tipos=config.tipos||[];
-  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[];
+  const dis=(tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false);
 
   return(
     <div>
@@ -1047,7 +1046,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
           <div style={{...S.card,padding:26,width:"90%",maxWidth:400}}>
             <div style={{fontWeight:800,fontSize:15,color:"#1a2f4a",marginBottom:4}}>Asignar responsable</div>
             <div style={{fontSize:12,color:"#5a7a9a",marginBottom:16}}>{assignModal.titulo}</div>
-            {(tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[]).map(d=>(
+            {((tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false)).map(d=>(
               <button key={d.id} onClick={()=>{asignarDis(assignModal.id,d.id);setAssignModal(null);}}
                 style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"11px 14px",borderRadius:11,border:"1px solid #e2e8f0",background:"#fff",cursor:"pointer",marginBottom:7,textAlign:"left"}}>
                 <div style={{width:32,height:32,borderRadius:"50%",background:d.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",fontWeight:700}}>{d.iniciales||getIniciales(d.nombre)}</div>
@@ -1232,7 +1231,7 @@ function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,ed
 
 /* ══ TAB KANBAN ════════════════════════════════════════ */
 function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarListo,aprobarEntrega,rechazarEntrega,uName,showToast,resolverResp,tradeUsers}){
-  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[];
+  const dis=(tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false);
   const tipos=config.tipos||[];
   const [assignModal,setAssignModal]=useState(null);
   const [rejectModal,setRejectModal]=useState(null);
@@ -1349,7 +1348,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
 
 /* ══ TAB DASHBOARD ══════════════════════════════════════ */
 function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,isDisenador}){
-  const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[];
+  const dis=(tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false);
   const tipos=config.tipos||[];
   const hoy=todayStr();
   const vencen7=solicitudes.filter(s=>s.deadline&&!["entregado","cancelado"].includes(s.stat)&&new Date(s.deadline)>=new Date(hoy)&&new Date(s.deadline)-new Date(hoy)<=7*86400000);
@@ -1484,7 +1483,7 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
 /* ══ GANTT DIARIO ════════════════════════════════════════ */
 function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,showResp,tradeUsers}){
   const dias=diasEnMes(gYear,gMonth);
-   const dis=tradeUsers&&tradeUsers.length>0?tradeUsers.filter(u=>u.rol==="disenador"&&u.activo!==false):[];
+   const dis=(tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false);
   const tipos=config.tipos||[];
   const hoy=todayStr();
   const navMes=dir=>{let m=gMonth+dir,y=gYear;if(m<0){m=11;y--;}if(m>11){m=0;y++;}setGMonth(m);setGYear(y);};
@@ -1597,23 +1596,23 @@ function DisenaoresPanel({S,dis,config,saveConfig,showNewD,setShowNewD,newDis,se
   const addDis=()=>{
     if(!newDis.nombre.trim())return;
     const ini=getIniciales(newDis.nombre);const c=AV_COLORS[dis.length%AV_COLORS.length];
-    saveConfig({...config,disenadores:[...dis,{id:"d"+Date.now(),nombre:newDis.nombre.trim(),iniciales:ini,color:c,rol:newDis.rol,hSem:parseInt(newDis.hSem)||48,activo:true}]});
+    saveConfig({...config,disenadores:[...(dis||[]),{id:"d"+Date.now(),nombre:newDis.nombre.trim(),iniciales:ini,color:c,rol:newDis.rol,hSem:parseInt(newDis.hSem)||48,activo:true}]});
     setNewDis({nombre:"",rol:"Diseñador",hSem:48});setShowNewD(false);showToast("✅ Diseñador agregado");
   };
   const startEdit=d=>{setEditId(d.id);setEditData({nombre:d.nombre,rol:d.rol,hSem:d.hSem,color:d.color||"#6c5ce7"});};
   const saveEdit=()=>{
     if(!editData.nombre?.trim())return;
-    saveConfig({...config,disenadores:dis.map(d=>d.id===editId?{...d,nombre:editData.nombre.trim(),iniciales:getIniciales(editData.nombre),rol:editData.rol,hSem:parseInt(editData.hSem)||48,color:editData.color}:d)});
+    saveConfig({...config,disenadores:(dis||[]).map(d=>d.id===editId?{...d,nombre:editData.nombre.trim(),iniciales:getIniciales(editData.nombre),rol:editData.rol,hSem:parseInt(editData.hSem)||48,color:editData.color}:d)});
     setEditId(null);showToast("✏️ Actualizado");
   };
-  const toggleDis=id=>saveConfig({...config,disenadores:dis.map(d=>d.id===id?{...d,activo:!d.activo}:d)});
+  const toggleDis=id=>saveConfig({...config,disenadores:(dis||[]).map(d=>d.id===id?{...d,activo:!d.activo}:d)});
   const confirmDel=()=>{saveConfig({...config,disenadores:dis.filter(d=>d.id!==delId)});setDelId(null);showToast("🗑️ Eliminado");};
   const ROLES=["Senior","Diseñador","Jr","Practicante"];
   const PALETTE=["#6c5ce7","#00b894","#0984e3","#e17055","#f6a623","#a29bfe","#fd79a8","#00b5b4","#d63031","#2d3436"];
   return(
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div><div style={{fontWeight:800,fontSize:14,color:"#1a2f4a"}}>Diseñadores</div><div style={{fontSize:11,color:"#8aaabb",marginTop:2}}>{dis.filter(d=>d.activo!==false).length} activos de {dis.length} registrados</div></div>
+        <div><div style={{fontWeight:800,fontSize:14,color:"#1a2f4a"}}>Diseñadores</div><div style={{fontSize:11,color:"#8aaabb",marginTop:2}}>{(dis||[]).filter(d=>d.activo!==false).length} activos de {(dis||[]).length} registrados</div></div>
         <button onClick={()=>setShowNewD(!showNewD)} style={{padding:"8px 14px",borderRadius:9,border:"none",background:"#6c5ce7",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>＋ Nuevo</button>
       </div>
       {showNewD&&(
@@ -1630,7 +1629,7 @@ function DisenaoresPanel({S,dis,config,saveConfig,showNewD,setShowNewD,newDis,se
         </div>
       )}
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {dis.map(d=>(
+        {(dis||[]).map(d=>(
           <div key={d.id}>
             {editId===d.id
               ?<div style={{...S.card,padding:16,border:"1.5px solid #6c5ce7"}}>
@@ -1668,7 +1667,7 @@ function DisenaoresPanel({S,dis,config,saveConfig,showNewD,setShowNewD,newDis,se
           <div style={{...S.card,padding:26,width:"90%",maxWidth:360,textAlign:"center"}}>
             <div style={{fontSize:32,marginBottom:10}}>🗑️</div>
             <div style={{fontWeight:800,fontSize:15,color:"#1a2f4a",marginBottom:6}}>¿Eliminar diseñador?</div>
-            <div style={{fontSize:12,color:"#5a7a9a",marginBottom:6}}>{dis.find(d=>d.id===delId)?.nombre}</div>
+            <div style={{fontSize:12,color:"#5a7a9a",marginBottom:6}}>{(dis||[]).find(d=>d.id===delId)?.nombre}</div>
             <div style={{padding:"8px 12px",borderRadius:8,background:"#fff1f2",border:"1px solid #fecaca",fontSize:11,color:"#dc2626",marginBottom:18}}>Los trabajos asignados quedarán sin responsable.</div>
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>setDelId(null)} style={{flex:1,padding:"11px",borderRadius:10,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontWeight:700,fontSize:13}}>Cancelar</button>
