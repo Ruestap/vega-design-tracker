@@ -653,7 +653,7 @@ export default function TradeApp() {
         {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
         {tab===1&&isAdmin&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes}/>}
         {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
-        {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador}/>}
+        {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador} tradeUsers={tradeUsers}/>}
         {tab===4&&isAdmin&&<TabConfig S={S} config={config} setConfig={setConfig} saveConfig={saveConfig} cfgTab={cfgTab} setCfgTab={setCfgTab} newTipo={newTipo} setNewTipo={setNewTipo} newDis={newDis} setNewDis={setNewDis} showNewT={showNewT} setShowNewT={setShowNewT} showNewD={showNewD} setShowNewD={setShowNewD} showToast={showToast}/>}
       </div>
 
@@ -1347,7 +1347,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
 }
 
 /* ══ TAB DASHBOARD ══════════════════════════════════════ */
-function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,isDisenador}){
+function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYear,gMonth,setGMonth,gFiltResp,setGFiltResp,gFiltTipo,setGFiltTipo,gFiltStat,setGFiltStat,selReq,setSelReq,isDisenador,tradeUsers}){
   const dis=(tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false);
   const tipos=config.tipos||[];
   const hoy=todayStr();
