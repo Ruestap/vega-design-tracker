@@ -957,7 +957,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                     </td>
 
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
-                      <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"center"}}>
+                      <div style={{display:"flex",flexDirection:"row",gap:4,alignItems:"center"}}>
                         {isAdmin&&<button onClick={()=>editarActividad(req)} style={{padding:"4px 8px",borderRadius:7,border:"1px solid #a29bfe",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:10,fontWeight:700}}>✏️</button>}
                         {isAdmin&&req.stat==="pendiente"&&<button onClick={()=>setAssignModal(req)} style={{padding:"4px 9px",borderRadius:7,border:"1px solid #6c5ce7",background:"#f0edff",color:"#6c5ce7",cursor:"pointer",fontSize:10,fontWeight:700}}>Asignar</button>}
                         {isAdmin&&req.stat==="aprobacion"&&<>
