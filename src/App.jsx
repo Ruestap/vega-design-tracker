@@ -337,27 +337,26 @@ function abrirWA(telefono, mensaje) {
 function abrirEmail(emails, asunto, cuerpo) {
   if(!emails||emails.length===0) return;
   const to = Array.isArray(emails)?emails.join(","):emails;
-  // Convertir el link del app en HTML clickeable
-  const cuerpoHtml = cuerpo
-    .replace(/https:\/\/vega-design-tracker\.vercel\.app\?logout=1/g,
-      "<a href=\"https://vega-design-tracker.vercel.app?logout=1\">Abrir VEGA Design Tracker</a>")
-    .replace(/\n/g,"<br>");
-  // Outlook 365 Web con body HTML
-  const url = "https://outlook.office365.com/mail/deeplink/compose?to="+encodeURIComponent(to)+"&subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpoHtml);
+  const cuerpoLimpio = String(cuerpo)
+    .replace(/<br\s*[/]?>/gi,"\n")
+    .replace(/<a[^>]*>([^<]*)<[/]a>/gi,"$1")
+    .replace(/<[^>]+>/g,"")
+    .replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&");
+  const url = "https://outlook.office365.com/mail/deeplink/compose?to="+encodeURIComponent(to)+"&subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpoLimpio);
   const win = window.open(url,"_blank","noopener,noreferrer");
   if(!win){const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.click();}
 }
 
 function buildMsgAsignacion(req, disNombre) {
-  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
+  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
 }
 
 function buildMsgNuevaOtraArea(req, uName) {
-  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
+  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
 }
 
 function buildMsgRecordatorio(req, disNombre) {
-  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
+  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app";
 }
 
 /* ══ APP PRINCIPAL ══════════════════════════════════════ */
@@ -387,6 +386,7 @@ export default function TradeApp() {
   /* ── nav ── */
   const [tab, setTab] = useState(0);
   const [panelNotif, setPanelNotif] = useState(null);
+  const [modalEmail, setModalEmail] = useState(null);
 
   /* ── data Firebase ── */
   const [solicitudes, setSolicitudes] = useState([]);
@@ -550,7 +550,8 @@ export default function TradeApp() {
         if(destinatarios.length>0) {
           const emails = destinatarios.map(u=>u.email);
           const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
-          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app?logout=1";
+          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app";
+          showToast("📧 Abriendo Outlook para notificar a: "+destinatarios.map(u=>u.nombre).join(", "));
           return {tipo:"email", emails, asunto, cuerpo};
         }
       } else if(data.responableId) {
@@ -559,7 +560,7 @@ export default function TradeApp() {
         if(dis) {
           const msg = buildMsgAsignacion(data, dis.nombre);
           const asunto = "Nueva actividad asignada: "+data.titulo;
-          const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+data.titulo+"\nEntrega: "+(data.fechaEntrega||"—")+" "+(data.horaCorte||"")+"\nÁrea: "+(data.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
+          const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+data.titulo+"\nEntrega: "+(data.fechaEntrega||"—")+" "+(data.horaCorte||"")+"\nÁrea: "+(data.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app";
           setPanelNotif({nombre:dis.nombre,telefono:dis.telefono||"",email:dis.email||"",msgWA:msg,asunto,cuerpoEmail,titulo:data.titulo,reqId:data.id});
         }
       }
@@ -585,7 +586,7 @@ export default function TradeApp() {
     if(dis) {
       const msg = buildMsgAsignacion({...req}, dis.nombre);
       const asunto = "Nueva actividad asignada: "+req.titulo;
-      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||req.deadline||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
+      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||req.deadline||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app";
       setPanelNotif({
         nombre: dis.nombre,
         telefono: dis.telefono||"",
@@ -756,13 +757,40 @@ export default function TradeApp() {
 
       <div style={{padding:"16px 24px",maxWidth:"100%",boxSizing:"border-box"}}>
         {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName} resolverResp={resolverResp} tradeUsers={tradeUsers} iniciarTrabajo={iniciarTrabajo}/>}
-        {tab===1&&(isAdmin||isViewer)&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} isViewer={isViewer} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes}/>}
+        {tab===1&&(isAdmin||isViewer)&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} isViewer={isViewer} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes} onShowModalEmail={isViewer?setModalEmail:null}/>}
         {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} iniciarTrabajo={iniciarTrabajo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
         {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador} tradeUsers={tradeUsers}/>}
         {tab===4&&isAdmin&&<TabConfig S={S} config={config} setConfig={setConfig} saveConfig={saveConfig} cfgTab={cfgTab} setCfgTab={setCfgTab} newTipo={newTipo} setNewTipo={setNewTipo} newDis={newDis} setNewDis={setNewDis} showNewT={showNewT} setShowNewT={setShowNewT} showNewD={showNewD} setShowNewD={setShowNewD} showToast={showToast}/>}
       </div>
 
       {briefModal&&<BriefModal S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} onClose={()=>{setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());}} isAdmin={isAdmin} editMode={!!briefEdit} solicitudes={solicitudes}/>}
+      {modalEmail&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(26,47,74,.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:70,backdropFilter:"blur(4px)"}}>
+          <div style={{...S.card,padding:24,width:"90%",maxWidth:440}}>
+            <div style={{fontWeight:800,fontSize:14,color:"#1a2f4a",marginBottom:4}}>📧 Notificación enviada</div>
+            <div style={{fontSize:12,color:"#5a7a9a",marginBottom:14}}>Se abrió Outlook 365 con el mensaje listo. Si no se abrió o no estabas logueado, reenvía manualmente:</div>
+            <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:9,padding:12,marginBottom:12}}>
+              <div style={{fontSize:10,fontWeight:700,color:"#5a7a9a",marginBottom:4}}>PARA</div>
+              <div style={{fontSize:12,color:"#1a2f4a",fontWeight:600,wordBreak:"break-all"}}>{Array.isArray(modalEmail.emails)?modalEmail.emails.join(", "):modalEmail.emails}</div>
+            </div>
+            <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:9,padding:12,marginBottom:14}}>
+              <div style={{fontSize:10,fontWeight:700,color:"#5a7a9a",marginBottom:4}}>ASUNTO</div>
+              <div style={{fontSize:12,color:"#1a2f4a"}}>{modalEmail.asunto}</div>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{abrirEmail(modalEmail.emails,modalEmail.asunto,modalEmail.cuerpo);}}
+                style={{flex:1,padding:"11px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#0984e3,#1a2f4a)",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:13}}>
+                🔁 Reintentar Outlook
+              </button>
+              <button onClick={()=>setModalEmail(null)}
+                style={{padding:"11px 16px",borderRadius:10,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:13}}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:"#1a2f4a",color:"#fff",padding:"11px 22px",borderRadius:24,fontSize:13,fontWeight:700,zIndex:99,boxShadow:"0 6px 24px rgba(0,0,0,.25)",whiteSpace:"nowrap"}}>{toast}</div>}
 
       {panelNotif&&(
@@ -1278,7 +1306,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
 }
 
 /* ══ TAB BRIEF ══════════════════════════════════════════ */
-function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,isViewer,editMode,onCancel,solicitudes}){
+function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,isViewer,editMode,onCancel,solicitudes,onShowModalEmail}){
   const tipos=config.tipos||[];
   const areas=config.areas||AREAS_DEFAULT;
   const set=(k,v)=>setBrief(p=>({...p,[k]:v}));
@@ -1413,6 +1441,7 @@ function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,isViewer,edi
           const emailData = await guardarSolicitud();
           if(emailData&&emailData.tipo==="email"){
             abrirEmail(emailData.emails,emailData.asunto,emailData.cuerpo);
+            if(onShowModalEmail) onShowModalEmail(emailData);
           }
         }} style={{...S.btn("#6c5ce7"),padding:"12px 28px",fontSize:13}}>{editMode?"Guardar cambios":"Crear actividad →"}</button>
       </div>
