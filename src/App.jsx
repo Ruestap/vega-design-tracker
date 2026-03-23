@@ -348,15 +348,15 @@ function abrirEmail(emails, asunto, cuerpo) {
 }
 
 function buildMsgAsignacion(req, disNombre) {
-  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\n<https://vega-design-tracker.vercel.app>";
+  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 function buildMsgNuevaOtraArea(req, uName) {
-  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\n<https://vega-design-tracker.vercel.app>";
+  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 function buildMsgRecordatorio(req, disNombre) {
-  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\n<https://vega-design-tracker.vercel.app>";
+  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 /* ══ APP PRINCIPAL ══════════════════════════════════════ */
@@ -550,7 +550,7 @@ export default function TradeApp() {
         if(destinatarios.length>0) {
           const emails = destinatarios.map(u=>u.email);
           const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
-          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\n<https://vega-design-tracker.vercel.app>";
+          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.solicitante||data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app?logout=1";
           showToast("📧 Abriendo Outlook para notificar a: "+destinatarios.map(u=>u.nombre).join(", "));
           // Limpiar campos ANTES de retornar emailData
           setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());
@@ -562,7 +562,7 @@ export default function TradeApp() {
         if(dis) {
           const msg = buildMsgAsignacion(data, dis.nombre);
           const asunto = "Nueva actividad asignada: "+data.titulo;
-          const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+data.titulo+"\nEntrega: "+(data.fechaEntrega||"—")+" "+(data.horaCorte||"")+"\nÁrea: "+(data.area||"—")+"\n\nVer en: <https://vega-design-tracker.vercel.app>";
+          const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+data.titulo+"\nEntrega: "+(data.fechaEntrega||"—")+" "+(data.horaCorte||"")+"\nÁrea: "+(data.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
           setPanelNotif({nombre:dis.nombre,telefono:dis.telefono||"",email:dis.email||"",msgWA:msg,asunto,cuerpoEmail,titulo:data.titulo,reqId:data.id,esAdmin:true});
         }
       }
@@ -588,7 +588,7 @@ export default function TradeApp() {
     if(dis) {
       const msg = buildMsgAsignacion({...req}, dis.nombre);
       const asunto = "Nueva actividad asignada: "+req.titulo;
-      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||req.deadline||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: <https://vega-design-tracker.vercel.app>";
+      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||req.deadline||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
       setPanelNotif({
         nombre: dis.nombre,
         telefono: dis.telefono||"",
@@ -760,13 +760,13 @@ export default function TradeApp() {
 
       <div style={{padding:"16px 24px",maxWidth:"100%",boxSizing:"border-box"}}>
         {tab===0&&<TabActividades S={S} solicitudes={solFilt} kpis={kpis} config={config} fStat={fStat} setFStat={setFStat} fTipo={fTipo} setFTipo={setFTipo} fResp={fResp} setFResp={setFResp} busq={busq} setBusq={setBusq} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} eliminarSolicitud={eliminarSolicitud} editarActividad={editarActividad} showToast={showToast} uName={uName} resolverResp={resolverResp} tradeUsers={tradeUsers} iniciarTrabajo={iniciarTrabajo}/>}
-        {tab===1&&(isAdmin||isViewer)&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} isViewer={isViewer} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes} onShowModalEmail={isViewer?setModalEmail:null}/>}
+        {tab===1&&(isAdmin||isViewer)&&<TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} isViewer={isViewer} editMode={!!briefEdit} onCancel={()=>{setBriefEdit(null);setBrief(emptyBrief());setTab(0);}} solicitudes={solicitudes} onShowModalEmail={isViewer?setModalEmail:null} uName={uName}/>}
         {tab===2&&<TabKanban S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} isAdmin={isAdmin} isDisenador={isDisenador} asignarDis={asignarDis} marcarListo={marcarListo} iniciarTrabajo={iniciarTrabajo} aprobarEntrega={aprobarEntrega} rechazarEntrega={rechazarEntrega} uName={uName} showToast={showToast} resolverResp={resolverResp} tradeUsers={tradeUsers}/>}
         {tab===3&&<TabDashboard S={S} solicitudes={isDisenador?solicitudes.filter(s=>s.responableNombre===uName):solicitudes} config={config} kpis={kpis} dashLvl={dashLvl} setDashLvl={setDashLvl} gYear={gYear} setGYear={setGYear} gMonth={gMonth} setGMonth={setGMonth} gFiltResp={gFiltResp} setGFiltResp={setGFiltResp} gFiltTipo={gFiltTipo} setGFiltTipo={setGFiltTipo} gFiltStat={gFiltStat} setGFiltStat={setGFiltStat} selReq={selReq} setSelReq={setSelReq} isDisenador={isDisenador} tradeUsers={tradeUsers}/>}
         {tab===4&&isAdmin&&<TabConfig S={S} config={config} setConfig={setConfig} saveConfig={saveConfig} cfgTab={cfgTab} setCfgTab={setCfgTab} newTipo={newTipo} setNewTipo={setNewTipo} newDis={newDis} setNewDis={setNewDis} showNewT={showNewT} setShowNewT={setShowNewT} showNewD={showNewD} setShowNewD={setShowNewD} showToast={showToast}/>}
       </div>
 
-      {briefModal&&<BriefModal S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} onClose={()=>{setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());}} isAdmin={isAdmin} editMode={!!briefEdit} solicitudes={solicitudes}/>}
+      {briefModal&&<BriefModal S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} onClose={()=>{setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());}} isAdmin={isAdmin} editMode={!!briefEdit} solicitudes={solicitudes} uName={uName}/>}
       {modalEmail&&(
         <div style={{position:"fixed",inset:0,background:"rgba(26,47,74,.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:70,backdropFilter:"blur(4px)"}}>
           <div style={{...S.card,padding:24,width:"90%",maxWidth:440}}>
@@ -785,7 +785,7 @@ export default function TradeApp() {
                 style={{flex:1,padding:"11px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#0984e3,#1a2f4a)",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:13}}>
                 🔁 Reintentar Outlook
               </button>
-              <button onClick={()=>setModalEmail(null)}
+              <button onClick={()=>{setModalEmail(null);setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());}}
                 style={{padding:"11px 16px",borderRadius:10,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:13}}>
                 Cerrar
               </button>
@@ -1309,13 +1309,16 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
 }
 
 /* ══ TAB BRIEF ══════════════════════════════════════════ */
-function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,isViewer,editMode,onCancel,solicitudes,onShowModalEmail}){
+function TabBrief({S,brief,setBrief,config,guardarSolicitud,isAdmin,isViewer,editMode,onCancel,solicitudes,onShowModalEmail,uName}){
   const tipos=config.tipos||[];
   const areas=config.areas||AREAS_DEFAULT;
   const set=(k,v)=>setBrief(p=>({...p,[k]:v}));
   const toggleMat=(m)=>setBrief(p=>({...p,materiales:p.materiales.includes(m)?p.materiales.filter(x=>x!==m):[...p.materiales,m]}));
   const [disenadoresUsers,setDisenadoresUsers]=useState([]);
   const [tradeAdmins,setTradeAdmins]=useState([]);
+  useEffect(()=>{
+    if(!brief.solicitante&&uName&&!editMode) setBrief(p=>({...p,solicitante:uName}));
+  },[uName]);
   useEffect(()=>{
     const unsub=onSnapshot(query(collection(db,"trade_users"),where("rol","==","disenador"),where("activo","==",true)),snap=>{
       const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));
@@ -1461,7 +1464,7 @@ function SectionHeader({n,label,color}){
   );
 }
 
-function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,editMode,solicitudes}){
+function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,editMode,solicitudes,uName}){
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(26,47,74,.65)",display:"flex",alignItems:"flex-start",justifyContent:"center",zIndex:50,backdropFilter:"blur(4px)",padding:"20px 16px",overflowY:"auto"}}>
       <div style={{...S.card,width:"100%",maxWidth:740,padding:0,position:"relative"}}>
@@ -1470,7 +1473,7 @@ function BriefModal({S,brief,setBrief,config,guardarSolicitud,onClose,isAdmin,ed
           <button onClick={onClose} style={{padding:"5px 12px",borderRadius:8,border:"1px solid #c8d8e8",background:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>✕ Cerrar</button>
         </div>
         <div style={{padding:20,maxHeight:"80vh",overflowY:"auto"}}>
-          <TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={editMode} onCancel={onClose} solicitudes={solicitudes}/>
+          <TabBrief S={S} brief={brief} setBrief={setBrief} config={config} guardarSolicitud={guardarSolicitud} isAdmin={isAdmin} editMode={editMode} onCancel={onClose} solicitudes={solicitudes} uName={uName}/>
         </div>
       </div>
     </div>
