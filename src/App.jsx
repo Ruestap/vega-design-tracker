@@ -142,60 +142,71 @@ function NotificacionesBell({uId,onVerReq}){
 }
 
 /* ══ UTILS ══════════════════════════════════════════════ */
-const todayStr = () => new Date().toISOString().slice(0,10);
+const todayStr = () => {
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+};
+
+function parseLocalDate(str) {
+  // Parsea YYYY-MM-DD como fecha LOCAL (no UTC) — evita bug de timezone
+  if(!str) return null;
+  const [y,m,d] = str.split("-").map(Number);
+  const dt = new Date(y, m-1, d, 0, 0, 0, 0);
+  return isNaN(dt)?null:dt;
+}
 
 function getAlerta(req) {
-  const hoy = todayStr();
+  const hoyStr = todayStr(); // YYYY-MM-DD local
   const ahora = new Date();
   const stat = req.stat;
   const fe = req.fechaEntrega || req.deadline || "";
-  const fi = req.fechaInicio || "";
   const hc = req.horaCorte || "";
 
   if(stat==="cancelado") return {label:"Finalizado",c:"#b2bec3",bg:"#f4f6f8"};
-  if(stat==="entregado") return {label:"Finalizado",c:"#00b894",bg:"#e8faf5"};
+  if(stat==="entregado") return {label:"Finalizado ✓",c:"#00b894",bg:"#e8faf5"};
+  if(stat==="retrasado") return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
+  if(stat==="aprobacion") return {label:"En revisión",c:"#0984e3",bg:"#e8f4fd"};
 
-  if(stat==="aprobacion") return {label:"En proceso",c:"#0984e3",bg:"#e8f4fd"};
-
-  // Verificar si ya pasó la fecha+hora de corte
   if(fe) {
-    if(hoy > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
-    if(hoy === fe) {
+    // Comparar strings YYYY-MM-DD directamente — sin timezone
+    if(hoyStr > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
+
+    if(hoyStr === fe) {
       if(hc) {
         const [hh,mm] = hc.split(":").map(Number);
         const corte = new Date(); corte.setHours(hh,mm,0,0);
-        if(ahora > corte) return {label:"Retraso",c:"#dc2626",bg:"#ffeae6"};
-        return {label:"Hoy · vence "+hc,c:"#e17055",bg:"#fff1ee"};
+        if(ahora >= corte) return {label:"Retraso · pasó corte",c:"#dc2626",bg:"#ffeae6"};
+        const H=hh; const hLabel=(H>12?H-12:H)+":"+(mm<10?"0":"")+mm+" "+(H>=12?"p.m.":"a.m.");
+        return {label:"Hoy · vence "+hLabel,c:"#e17055",bg:"#fff1ee"};
       }
       return {label:"Vence hoy",c:"#e17055",bg:"#fff1ee"};
     }
+
+    // Vence mañana — usar hora LOCAL no UTC
+    const manana = new Date();
+    manana.setDate(manana.getDate()+1);
+    const mananaStr = manana.getFullYear()+"-"+String(manana.getMonth()+1).padStart(2,"0")+"-"+String(manana.getDate()).padStart(2,"0");
+    if(fe === mananaStr) return {label:"Vence mañana",c:"#f6a623",bg:"#fff8ec"};
   }
 
-  if(stat==="pendiente") {
-    if(fi && hoy < fi) return {label:"Pendiente",c:"#f6a623",bg:"#fff8ec"};
-    if(fe && hoy > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
-    return {label:"Pendiente",c:"#f6a623",bg:"#fff8ec"};
-  }
-
-  if(stat==="en_diseno") {
-    if(fe && hoy > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
-    const dias = fe ? Math.ceil((new Date(fe)-new Date(hoy))/86400000) : null;
-    if(dias!==null && dias<=2) return {label:"En proceso",c:"#6c5ce7",bg:"#f0edff"};
-    return {label:"En proceso",c:"#6c5ce7",bg:"#f0edff"};
-  }
+  if(stat==="pendiente") return {label:"Pendiente",c:"#f6a623",bg:"#fff8ec"};
+  if(stat==="en_diseno") return {label:"En diseño",c:"#6c5ce7",bg:"#f0edff"};
 
   return {label:"—",c:"#b2bec3",bg:"#f4f6f8"};
 }
 
 function calcDiasRetraso(fechaStr) {
   if(!fechaStr) return 0;
-  return Math.ceil((new Date(todayStr())-new Date(fechaStr))/86400000);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const [y,m,d]=fechaStr.split("-").map(Number);
+  const fe = new Date(y,m-1,d,0,0,0,0);
+  return Math.max(0, Math.ceil((hoy-fe)/86400000));
 }
 
 function getDisponibilidad(disId, solicitudes, fechaNueva, horaCorteNueva, disNombre) {
   const hoy = todayStr();
   const manana = new Date(); manana.setDate(manana.getDate()+1);
-  const mananaStr = manana.toISOString().slice(0,10);
+  const mananaStr = manana.getFullYear()+"-"+String(manana.getMonth()+1).padStart(2,"0")+"-"+String(manana.getDate()).padStart(2,"0");
 
   const activas = solicitudes.filter(s =>
     (s.responableId === disId || (disNombre && s.responableNombre === disNombre)) &&
