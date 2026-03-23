@@ -159,30 +159,46 @@ function getAlerta(req) {
   const hoyStr = todayStr(); // YYYY-MM-DD local
   const ahora = new Date();
   const stat = req.stat;
-  const fe = req.fechaEntrega || req.deadline || "";
+  const fe = req.fechaEntrega || "";
   const hc = req.horaCorte || "";
 
   if(stat==="cancelado") return {label:"Finalizado",c:"#b2bec3",bg:"#f4f6f8"};
   if(stat==="entregado") return {label:"Finalizado ✓",c:"#00b894",bg:"#e8faf5"};
   if(stat==="retrasado") return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
+
+  // Calcular si venció ANTES de evaluar el estado
+  let vencio = false;
+  let venceHoyAun = false;
+  if(fe) {
+    if(hoyStr > fe) {
+      vencio = true;
+    } else if(hoyStr === fe) {
+      if(hc) {
+        const [hh2,mm2] = hc.split(":").map(Number);
+        const corte = new Date(); corte.setHours(hh2,mm2,0,0);
+        if(ahora >= corte) vencio = true;
+        else venceHoyAun = true;
+      } else {
+        venceHoyAun = true;
+      }
+    }
+  }
+
+  // Si venció — mostrar retraso sin importar el estado
+  if(vencio) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
+
+  // En aprobación y aún dentro del plazo
   if(stat==="aprobacion") return {label:"En revisión",c:"#0984e3",bg:"#e8f4fd"};
 
   if(fe) {
-    // Comparar strings YYYY-MM-DD directamente — sin timezone
-    if(hoyStr > fe) return {label:"Retraso "+calcDiasRetraso(fe)+"d",c:"#dc2626",bg:"#ffeae6"};
-
-    if(hoyStr === fe) {
-      if(hc) {
-        const [hh,mm] = hc.split(":").map(Number);
-        const corte = new Date(); corte.setHours(hh,mm,0,0);
-        if(ahora >= corte) return {label:"Retraso · pasó corte",c:"#dc2626",bg:"#ffeae6"};
-        const H=hh; const hLabel=(H>12?H-12:H)+":"+(mm<10?"0":"")+mm+" "+(H>=12?"p.m.":"a.m.");
-        return {label:"Hoy · vence "+hLabel,c:"#e17055",bg:"#fff1ee"};
-      }
-      return {label:"Vence hoy",c:"#e17055",bg:"#fff1ee"};
+    if(venceHoyAun) {
+      const [hh,mm] = hc.split(":").map(Number);
+      const H=hh; const hLabel=(H>12?H-12:H)+":"+(mm<10?"0":"")+mm+" "+(H>=12?"p.m.":"a.m.");
+      return {label:"Hoy · vence "+hLabel,c:"#e17055",bg:"#fff1ee"};
     }
+    if(hoyStr === fe) return {label:"Vence hoy",c:"#e17055",bg:"#fff1ee"};
 
-    // Vence mañana — usar hora LOCAL no UTC
+    // Vence mañana — hora LOCAL no UTC
     const manana = new Date();
     manana.setDate(manana.getDate()+1);
     const mananaStr = manana.getFullYear()+"-"+String(manana.getMonth()+1).padStart(2,"0")+"-"+String(manana.getDate()).padStart(2,"0");
@@ -261,7 +277,7 @@ function calcHHManual(req) {
   // Calcula HH desde fechaInicio+horaInicio hasta fechaEntrega+horaCorte
   // L-V 08:30-18:30, Sab 08:30-11:30
   const fi = req.fechaInicio || req.creadoEn?.slice(0,10);
-  const fe = req.fechaEntrega || req.deadline;
+  const fe = req.fechaEntrega;
   const hi = req.horaInicio || "08:30";
   const hc = req.horaCorte || "18:30";
   if(!fi||!fe) return null;
@@ -304,7 +320,7 @@ function diasLab(d1, d2) {
 
 function calcTiempo(req) {
   const fi = req.fechaInicio || req.creadoEn?.slice(0,10);
-  const fe = req.fechaEntrega || req.deadline;
+  const fe = req.fechaEntrega;
   if(!fi||!fe) return {dias:0,total:0,pct:0,label:"—",hLabel:"—"};
   const inicio = new Date(fi);
   const fin = new Date(fe);
@@ -553,7 +569,6 @@ export default function TradeApp() {
     const existing=solicitudes.find(s=>s.id===briefEdit);
     const data={
       ...brief,id,
-      deadline:brief.fechaEntrega||"",
       fechaInicio:brief.fechaInicio||"",
       horaInicio:brief.horaInicio||"",
       fechaEntrega:brief.fechaEntrega||"",
@@ -617,7 +632,7 @@ export default function TradeApp() {
     if(dis) {
       const msg = buildMsgAsignacion({...req}, dis.nombre);
       const asunto = "Nueva actividad asignada: "+req.titulo;
-      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||req.deadline||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
+      const cuerpoEmail = "Hola "+dis.nombre+",\n\nSe te asignó una nueva actividad de diseño.\n\nTítulo: "+req.titulo+"\nEntrega: "+(req.fechaEntrega||"—")+" "+(req.horaCorte||"")+"\nÁrea: "+(req.area||"—")+"\n\nVer en: https://vega-design-tracker.vercel.app?logout=1";
       setPanelNotif({
         nombre: dis.nombre,
         telefono: dis.telefono||"",
@@ -654,7 +669,7 @@ export default function TradeApp() {
   const aprobarEntrega=async(reqId)=>{
     const req=solicitudes.find(s=>s.id===reqId);if(!req)return;
     const ts=new Date().toISOString();
-    const aT=todayStr()<=(req.fechaEntrega||req.deadline||"9999-12-31");
+    const aT=todayStr()<=(req.fechaEntrega||"9999-12-31");
     await setDoc(doc(db,"trade_solicitudes",reqId),{
       ...req,stat:aT?"entregado":"retrasado",tsEntregado:ts,aTiempo:aT,updatedAt:ts,
     });
@@ -1149,7 +1164,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                 const resp=resolverResp?resolverResp(req.responableId,req.responableNombre):(dis.find(d=>d.id===req.responableId)||null);
                 const c=STAT_C[req.stat]||"#b2bec3";
                 const hoy=todayStr();
-                const vencida=req.deadline&&hoy>req.deadline&&!["entregado","cancelado"].includes(req.stat);
+                const vencida=req.fechaEntrega&&hoy>req.fechaEntrega&&!["entregado","cancelado"].includes(req.stat);
                 return(
                   <tr key={req.id} style={{borderBottom:"1px solid #f5f7fa",cursor:"pointer"}}
                     onMouseEnter={e=>e.currentTarget.style.background="#f8fcff"}
@@ -1178,7 +1193,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                         :<span style={{fontSize:10,color:"#b2bec3"}}>Sin asignar</span>}
                     </td>
                     <td style={{padding:"10px 8px",whiteSpace:"nowrap"}}>
-                      <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:"#5a7a9a",background:"#f0f4f8"}}>{req.fechaEntrega||req.deadline||"—"}</span>
+                      <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:"#5a7a9a",background:"#f0f4f8"}}>{req.fechaEntrega||"—"}</span>
                     </td>
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
                       <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:"#5a7a9a",background:"#f0f4f8",whiteSpace:"nowrap"}}>
@@ -1303,7 +1318,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                   {l:"Prioridad",v:verBrief.prioridad||"—"},
                   {l:"Solicitante",v:verBrief.creadoPor||"—"},
                   {l:"Fecha inicio",v:verBrief.fechaInicio||"—"},
-                  {l:"Fecha entrega",v:verBrief.fechaEntrega||verBrief.deadline||"—"},
+                  {l:"Fecha entrega",v:verBrief.fechaEntrega||"—"},
                   {l:"Hora de corte",v:verBrief.horaCorte||"—"},
                   {l:"HH estimadas",v:(verBrief.hEst||"—")+"h"},
                 ].map(f=>(
@@ -1569,7 +1584,7 @@ function TabKanban({S,solicitudes,config,isAdmin,isDisenador,asignarDis,marcarLi
                   const tipo=tipos.find(t=>t.id===req.tipo);
                   const resp=resolverResp?resolverResp(req.responableId,req.responableNombre):(dis.find(d=>d.id===req.responableId)||null);
                   const c=STAT_C[req.stat]||"#b2bec3";
-                  const vencida=req.deadline&&todayStr()>req.deadline&&!["entregado","cancelado"].includes(req.stat);
+                  const vencida=req.fechaEntrega&&todayStr()>req.fechaEntrega&&!["entregado","cancelado"].includes(req.stat);
                   return(
                     <div key={req.id} style={{...S.card,padding:12,borderLeft:"3px solid "+c}}>
                       <div style={{fontSize:11,fontWeight:700,color:"#1a2f4a",marginBottom:4,lineHeight:1.3}}>{req.titulo}</div>
@@ -1638,8 +1653,8 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
   const dis=(tradeUsers||[]).filter(u=>u.rol==="disenador"&&u.activo!==false);
   const tipos=config.tipos||[];
   const hoy=todayStr();
-  const vencen7=solicitudes.filter(s=>s.deadline&&!["entregado","cancelado"].includes(s.stat)&&new Date(s.deadline)>=new Date(hoy)&&new Date(s.deadline)-new Date(hoy)<=7*86400000);
-  const retrasadas=solicitudes.filter(s=>s.stat==="retrasado"||(s.deadline&&hoy>s.deadline&&!["entregado","cancelado"].includes(s.stat)));
+  const vencen7=solicitudes.filter(s=>s.fechaEntrega&&!["entregado","cancelado"].includes(s.stat)&&new Date(s.fechaEntrega)>=new Date(hoy)&&new Date(s.fechaEntrega)-new Date(hoy)<=7*86400000);
+  const retrasadas=solicitudes.filter(s=>s.stat==="retrasado"||(s.fechaEntrega&&hoy>s.fechaEntrega&&!["entregado","cancelado"].includes(s.stat)));
   const nivelesDisponibles=isDisenador
     ?[{n:3,label:"Mis trabajos",sub:"Vista personal",icon:"🎨"}]
     :[{n:1,label:"Dirección",sub:"Visión ejecutiva",icon:"👑"},{n:2,label:"Gerencia",sub:"Análisis y causas",icon:"📊"},{n:3,label:"Operativo",sub:"Seguimiento diario",icon:"⚙️"}];
@@ -1683,7 +1698,7 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
             <div style={{...S.card,padding:16}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><span style={{fontSize:16}}>⏰</span><div style={{fontWeight:800,fontSize:13,color:"#1a2f4a"}}>Vencen en 7 días</div><span style={{marginLeft:"auto",padding:"2px 8px",borderRadius:20,background:"#fff8ec",color:"#f6a623",fontWeight:800,fontSize:12}}>{vencen7.length}</span></div>
-              {vencen7.slice(0,5).map(s=>{const tipo=tipos.find(t=>t.id===s.tipo);const diff=Math.ceil((new Date(s.deadline)-new Date(hoy))/86400000);return(<div key={s.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"1px solid #f5f7fa"}}><span style={{fontSize:16,flexShrink:0}}>{tipo?.e||"📌"}</span><div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,fontSize:12,color:"#1a2f4a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.titulo}</div><div style={{fontSize:10,color:"#8aaabb"}}>{s.deadline}</div></div><span style={{padding:"2px 8px",borderRadius:20,background:"#fff8ec",color:"#f6a623",fontWeight:700,fontSize:10,whiteSpace:"nowrap"}}>{diff===0?"Hoy":diff===1?"Mañana":diff+"d"}</span></div>);})}
+              {vencen7.slice(0,5).map(s=>{const tipo=tipos.find(t=>t.id===s.tipo);const diff=Math.ceil((new Date(s.fechaEntrega)-new Date(hoy))/86400000);return(<div key={s.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"1px solid #f5f7fa"}}><span style={{fontSize:16,flexShrink:0}}>{tipo?.e||"📌"}</span><div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,fontSize:12,color:"#1a2f4a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.titulo}</div><div style={{fontSize:10,color:"#8aaabb"}}>{s.fechaEntrega}</div></div><span style={{padding:"2px 8px",borderRadius:20,background:"#fff8ec",color:"#f6a623",fontWeight:700,fontSize:10,whiteSpace:"nowrap"}}>{diff===0?"Hoy":diff===1?"Mañana":diff+"d"}</span></div>);})}
               {vencen7.length===0&&<div style={{fontSize:12,color:"#b2bec3",textAlign:"center",padding:"20px 0"}}>Sin vencimientos próximos ✅</div>}
             </div>
             <div style={{...S.card,padding:16}}>
@@ -1738,7 +1753,7 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
         <div>
           <div style={{fontSize:11,fontWeight:800,color:"#5a7a9a",letterSpacing:".05em",marginBottom:12}}>HOY — {new Date().toLocaleDateString("es-PE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).toUpperCase()}</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
-            {[{label:"En proceso",val:solicitudes.filter(s=>["en_diseno","aprobacion"].includes(s.stat)).length,c:"#6c5ce7",icon:"🎨"},{label:"Vencen hoy",val:solicitudes.filter(s=>s.deadline===todayStr()&&!["entregado","cancelado"].includes(s.stat)).length,c:"#e17055",icon:"⚠️"},{label:"Entregados hoy",val:solicitudes.filter(s=>s.tsEntregado?.slice(0,10)===todayStr()).length,c:"#00b894",icon:"✅"}].map(k=>(
+            {[{label:"En proceso",val:solicitudes.filter(s=>["en_diseno","aprobacion"].includes(s.stat)).length,c:"#6c5ce7",icon:"🎨"},{label:"Vencen hoy",val:solicitudes.filter(s=>s.fechaEntrega===todayStr()&&!["entregado","cancelado"].includes(s.stat)).length,c:"#e17055",icon:"⚠️"},{label:"Entregados hoy",val:solicitudes.filter(s=>s.tsEntregado?.slice(0,10)===todayStr()).length,c:"#00b894",icon:"✅"}].map(k=>(
               <div key={k.label} style={{...S.card,padding:14,borderLeft:"4px solid "+k.c}}><div style={{fontSize:9,color:"#8aaabb",fontWeight:700,marginBottom:5}}>{k.label.toUpperCase()}</div><div style={{fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:800,color:k.c}}>{k.val}</div></div>
             ))}
           </div>
@@ -1748,13 +1763,13 @@ function TabDashboard({S,solicitudes,config,kpis,dashLvl,setDashLvl,gYear,setGYe
               const tipo=tipos.find(t=>t.id===req.tipo);
               const resp=dis.find(d=>d.id===req.responableId);
               const c=STAT_C[req.stat]||"#b2bec3";
-              const vencida=req.deadline&&todayStr()>req.deadline;
+              const vencida=req.fechaEntrega&&todayStr()>req.fechaEntrega;
               return(
                 <div key={req.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",borderBottom:"1px solid #f5f7fa"}}>
                   <div style={{width:4,height:36,borderRadius:2,background:c,flexShrink:0}}/>
                   <div style={{flex:1,minWidth:0}}><div style={{fontWeight:700,fontSize:12,color:"#1a2f4a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{req.titulo}</div><div style={{fontSize:9,color:"#8aaabb"}}>{tipo?.e||"📌"} {tipo?.n||req.tipo} · {req.area}</div></div>
                   {resp&&<div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:22,height:22,borderRadius:"50%",background:resp.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff",fontWeight:700}}>{resp.iniciales||getIniciales(resp.nombre)}</div><span style={{fontSize:10,color:"#5a7a9a"}}>{resp.nombre.split(" ")[0]}</span></div>}
-                  <div><div style={{fontSize:10,fontWeight:700,color:vencida?"#e17055":"#5a7a9a"}}>{req.deadline||"—"}</div>{vencida&&<div style={{fontSize:8,color:"#e17055",fontWeight:700}}>VENCIDO</div>}</div>
+                  <div><div style={{fontSize:10,fontWeight:700,color:vencida?"#e17055":"#5a7a9a"}}>{req.fechaEntrega||"—"}</div>{vencida&&<div style={{fontSize:8,color:"#e17055",fontWeight:700}}>VENCIDO</div>}</div>
                   <span style={{padding:"3px 9px",borderRadius:20,fontSize:10,fontWeight:700,color:c,background:c+"18"}}>{STAT_L[req.stat]||req.stat}</span>
                 </div>
               );
@@ -1775,8 +1790,8 @@ function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFilt
   const hoy=todayStr();
   const navMes=dir=>{let m=gMonth+dir,y=gYear;if(m<0){m=11;y--;}if(m>11){m=0;y++;}setGMonth(m);setGYear(y);};
   const filtered=useMemo(()=>solicitudes.filter(s=>{
-    const si=s.creadoEn?.slice(0,7);const sd=s.deadline?.slice(0,7);const ym=gYear+"-"+String(gMonth+1).padStart(2,"0");
-    if(si>ym&&sd<ym)return false;if(!s.creadoEn&&!s.deadline)return false;
+    const si=s.creadoEn?.slice(0,7);const sd=s.fechaEntrega?.slice(0,7);const ym=gYear+"-"+String(gMonth+1).padStart(2,"0");
+    if(si>ym&&sd<ym)return false;if(!s.creadoEn&&!s.fechaEntrega)return false;
     if(gFiltResp&&s.responableId!==gFiltResp)return false;
     if(gFiltTipo&&s.tipo!==gFiltTipo)return false;
     if(gFiltStat&&s.stat!==gFiltStat)return false;
@@ -1821,10 +1836,10 @@ function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFilt
             const tipo=tipos.find(t=>t.id===req.tipo);const resp=dis.find(d=>d.id===req.responableId);
             const c=STAT_C[req.stat]||"#b2bec3";
             const startD=Math.max(1,getDayInMonth(req.creadoEn?.slice(0,10))||1);
-            const endD=Math.min(dias,getDayInMonth(req.deadline)||dias);
+            const endD=Math.min(dias,getDayInMonth(req.fechaEntrega)||dias);
             const startPct=((startD-1)/dias)*100;const widthPct=((endD-startD+1)/dias)*100;const span=endD-startD+1;
-            const vencida=req.deadline&&hoy>req.deadline&&!["entregado","cancelado"].includes(req.stat);
-            const vence7=req.deadline&&!["entregado","cancelado"].includes(req.stat)&&new Date(req.deadline)-new Date(hoy)<=7*86400000&&new Date(req.deadline)>=new Date(hoy);
+            const vencida=req.fechaEntrega&&hoy>req.fechaEntrega&&!["entregado","cancelado"].includes(req.stat);
+            const vence7=req.fechaEntrega&&!["entregado","cancelado"].includes(req.stat)&&new Date(req.fechaEntrega)-new Date(hoy)<=7*86400000&&new Date(req.fechaEntrega)>=new Date(hoy);
             const alerta=req.stat==="entregado"?"FINALIZADO":vencida?"VENCIDO":vence7?"PRÓXIMO":"PENDIENTE";
             const alertaC=req.stat==="entregado"?"#00b894":vencida?"#dc2626":vence7?"#f6a623":"#b2bec3";
             return(
@@ -1837,7 +1852,7 @@ function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFilt
                   <div style={{flex:1,padding:"0 8px",borderRight:"1px solid #f0f4f8",minWidth:0}}><div style={{fontSize:11,fontWeight:700,color:"#1a2f4a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{req.titulo}</div><div style={{fontSize:8,color:"#8aaabb"}}>{req.id}</div></div>
                   {showResp&&<div style={{width:70,flexShrink:0,textAlign:"center",borderRight:"1px solid #f0f4f8",padding:"0 4px"}}>{resp?<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><div style={{width:20,height:20,borderRadius:"50%",background:resp.color||"#6c5ce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:7,color:"#fff",fontWeight:700}}>{resp.iniciales||getIniciales(resp.nombre)}</div><span style={{fontSize:7,color:"#5a7a9a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:64}}>{resp.nombre.split(" ")[0]}</span></div>:<span style={{fontSize:9,color:"#b2bec3"}}>—</span>}</div>}
                   <div style={{width:70,flexShrink:0,textAlign:"center",borderRight:"1px solid #f0f4f8",padding:"0 4px"}}><span style={{padding:"2px 5px",borderRadius:20,fontSize:8,fontWeight:700,color:alertaC,background:alertaC+"18"}}>{alerta}</span></div>
-                  <div style={{width:56,flexShrink:0,textAlign:"center",padding:"0 4px"}}><span style={{fontSize:9,fontWeight:700,color:vencida?"#e17055":"#5a7a9a"}}>{req.deadline?.slice(5)||"—"}</span></div>
+                  <div style={{width:56,flexShrink:0,textAlign:"center",padding:"0 4px"}}><span style={{fontSize:9,fontWeight:700,color:vencida?"#e17055":"#5a7a9a"}}>{req.fechaEntrega?.slice(5)||"—"}</span></div>
                 </div>
                 <div style={{flex:1,position:"relative",height:38}}>
                   {Array.from({length:dias},(_,i)=>{const d=i+1;const dow=new Date(gYear,gMonth,d).getDay();return <div key={d} style={{position:"absolute",left:((i)/dias)*100+"%",width:(1/dias)*100+"%",height:"100%",background:d===todayD?"#f0edff":dow===0||dow===6?"#fafafa":"transparent",borderRight:"1px solid #f5f7fa"}}/>;})};
@@ -1863,7 +1878,7 @@ function GanttDiario({S,solicitudes,config,gYear,setGYear,gMonth,setGMonth,gFilt
             <button onClick={()=>setSelReq(null)} style={{padding:"5px 12px",borderRadius:8,border:"1px solid #c8d8e8",background:"#fff",color:"#5a7a9a",cursor:"pointer",fontSize:11,fontWeight:700}}>✕</button>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-            {[{label:"INICIO",val:selReq.creadoEn?.slice(0,10)||"—",c:"#5a7a9a"},{label:"DEADLINE",val:selReq.deadline||"—",c:selReq.deadline&&hoy>selReq.deadline?"#e17055":"#5a7a9a"},{label:"HH EST.",val:(selReq.hEst||"—")+"h",c:"#0984e3"},{label:"HH REALES",val:selReq.hReal>0?selReq.hReal+"h":"En proceso",c:selReq.hReal>(parseFloat(selReq.hEst)||99)?"#e17055":"#00b894"}].map(k=>(
+            {[{label:"INICIO",val:selReq.creadoEn?.slice(0,10)||"—",c:"#5a7a9a"},{label:"F. ENTREGA",val:selReq.fechaEntrega||"—",c:selReq.fechaEntrega&&hoy>selReq.fechaEntrega?"#e17055":"#5a7a9a"},{label:"HH EST.",val:(selReq.hEst||"—")+"h",c:"#0984e3"},{label:"HH REALES",val:selReq.hReal>0?selReq.hReal+"h":"En proceso",c:selReq.hReal>(parseFloat(selReq.hEst)||99)?"#e17055":"#00b894"}].map(k=>(
               <div key={k.label} style={{background:"#fff",borderRadius:9,padding:"10px 12px",border:"1px solid #e2e8f0"}}><div style={{fontSize:8,color:"#8aaabb",fontWeight:700,marginBottom:3}}>{k.label}</div><div style={{fontSize:14,fontWeight:800,color:k.c}}>{k.val}</div></div>
             ))}
           </div>
