@@ -278,17 +278,35 @@ function calcHHManual(req) {
   return Math.round(hh*10)/10||null;
 }
 
+function diasLab(d1, d2) {
+  // Cuenta días laborables L-V entre dos fechas (inclusive d1, exclusive d2)
+  let count=0, cur=new Date(d1);
+  cur.setHours(0,0,0,0);
+  const end=new Date(d2); end.setHours(0,0,0,0);
+  while(cur<end){
+    const dow=cur.getDay();
+    if(dow>=1&&dow<=5) count++;
+    cur.setDate(cur.getDate()+1);
+  }
+  return count;
+}
+
 function calcTiempo(req) {
   const fi = req.fechaInicio || req.creadoEn?.slice(0,10);
   const fe = req.fechaEntrega || req.deadline;
-  if(!fi||!fe) return {dias:0,total:0,pct:0,label:"—"};
+  if(!fi||!fe) return {dias:0,total:0,pct:0,label:"—",hLabel:"—"};
   const inicio = new Date(fi);
   const fin = new Date(fe);
   const hoy = new Date(todayStr());
-  const total = Math.max(1,Math.ceil((fin-inicio)/86400000));
-  const transcurrido = Math.max(0,Math.min(total,Math.ceil((hoy-inicio)/86400000)));
+  const total = Math.max(1, diasLab(inicio, fin));
+  const transcurrido = Math.max(0, Math.min(total, diasLab(inicio, hoy)));
   const pct = Math.round((transcurrido/total)*100);
-  return {dias:transcurrido, total, pct, label:transcurrido+"/"+total};
+  // También calcular HH laborables totales para mostrar como "1d 3h"
+  const hhTot = calcHHManual(req)||0;
+  const dias = Math.floor(hhTot/10); // 10h laborables por día L-V
+  const hrs = Math.round((hhTot % 10)*10)/10;
+  const hLabel = dias>0 ? (hrs>0?dias+"d "+hrs+"h":dias+"d") : (hhTot>0?hhTot+"h":"—");
+  return {dias:transcurrido, total, pct, label:transcurrido+"d/"+total+"d", hLabel};
 }
 
 const sc = v=>{ if(!v&&v!==0)return"#b2bec3"; if(v>=90)return"#00b894"; if(v>=70)return"#f6a623"; if(v>=50)return"#e17055"; return"#d63031"; };
@@ -348,15 +366,15 @@ function abrirEmail(emails, asunto, cuerpo) {
 }
 
 function buildMsgAsignacion(req, disNombre) {
-  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
+  return "Hola "+disNombre+" 👋\n\nTienes una nueva actividad de diseño asignada:\n\n📋 *"+req.titulo+"*\n📅 Entrega: "+(req.fechaEntrega||"—")+"\n⏰ Hora de cierre: "+(req.horaCorte||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n📌 Área: "+(req.area||"—")+"\n\nRevisa el detalle en VEGA Design Tracker:\n\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 function buildMsgNuevaOtraArea(req, uName) {
-  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
+  return "Nueva solicitud de diseño recibida de "+uName+":\n\n📋 "+req.titulo+"\n🏢 Área: "+(req.area||"—")+"\n🏷 Tipo: "+(req.tipo||"—")+"\n\nRequiere asignación de diseñador, fecha y hora de cierre.\n\nRevisa en VEGA Design Tracker:\n\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 function buildMsgRecordatorio(req, disNombre) {
-  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\nhttps://vega-design-tracker.vercel.app?logout=1";
+  return "⚠️ Recordatorio - Entrega mañana\n\nHola "+disNombre+", tu actividad *"+req.titulo+"* vence mañana "+req.fechaEntrega+" a las "+(req.horaCorte||"18:30")+".\n\nVEGA Design Tracker:\n\nhttps://vega-design-tracker.vercel.app?logout=1";
 }
 
 /* ══ APP PRINCIPAL ══════════════════════════════════════ */
@@ -550,7 +568,7 @@ export default function TradeApp() {
         if(destinatarios.length>0) {
           const emails = destinatarios.map(u=>u.email);
           const asunto = "Nueva solicitud pendiente de asignación — "+data.titulo;
-          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.solicitante||data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\nhttps://vega-design-tracker.vercel.app?logout=1";
+          const cuerpo = "Hola equipo Trade Marketing,\n\nSe recibió una nueva solicitud de diseño.\n\nÁrea: "+data.area+"\nTítulo: "+data.titulo+"\nTipo: "+(data.tipo||"—")+"\nSolicitante: "+(data.solicitante||data.creadoPor||"—")+"\n\nIngresen al app para asignar diseñador, fecha y hora de cierre:\n\nhttps://vega-design-tracker.vercel.app?logout=1";
           showToast("📧 Abriendo Outlook para notificar a: "+destinatarios.map(u=>u.nombre).join(", "));
           // Limpiar campos ANTES de retornar emailData
           setBriefModal(false);setBriefEdit(null);setBrief(emptyBrief());
@@ -1173,8 +1191,12 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
                       {(()=>{
                         const hh=calcHHManual(req);
+                        const tiempoInfo=calcTiempo(req);
                         if(!hh) return <span style={{color:"#b2bec3",fontSize:11}}>—</span>;
-                        return <span style={{fontWeight:700,fontSize:11,color:"#0984e3"}}>{hh}h</span>;
+                        const overEst=hh>(parseFloat(req.hEst)||999);
+                        const d=Math.floor(hh/10);const h=Math.round((hh%10)*10)/10;
+                        const lbl=d>0?(h>0?d+"d "+h+"h":d+"d"):hh+"h";
+                        return <span style={{fontWeight:700,fontSize:11,color:overEst?"#e17055":"#0984e3"}} title={hh+"h hábiles"}>{lbl}</span>;
                       })()}
                     </td>
                     <td style={{padding:"10px 8px",minWidth:100}}>
@@ -1184,7 +1206,7 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                         const barC=t.pct>=100?"#e17055":t.pct>=70?"#f6a623":"#6c5ce7";
                         return <div>
                           <div style={{display:"flex",justifyContent:"space-between",fontSize:10,marginBottom:3}}>
-                            <span style={{fontWeight:700,color:"#1a2f4a"}}>{t.label}</span>
+                            <span style={{fontWeight:700,color:"#1a2f4a"}}>{t.label} lab</span>
                             <span style={{fontWeight:700,color:barC}}>{t.pct}%</span>
                           </div>
                           <div style={{height:5,background:"#f0f4f8",borderRadius:3}}>
@@ -1196,7 +1218,9 @@ function TabActividades({S,solicitudes,kpis,config,fStat,setFStat,fTipo,setFTipo
                     <td style={{padding:"10px 8px",textAlign:"center"}}>
                       {(()=>{
                         const t=calcTiempo(req);
-                        return <span style={{fontSize:11,fontWeight:700,color:t.dias>t.total?"#e17055":"#1a2f4a"}}>{t.dias||"—"}</span>;
+                        const fi=req.fechaInicio||req.creadoEn?.slice(0,10);
+                        const labD=fi?diasLab(new Date(fi),new Date(todayStr())):0;
+                        return <span style={{fontSize:11,fontWeight:700,color:labD>t.total?"#e17055":"#1a2f4a"}}>{labD>0?labD+"d":"<1d"}</span>;
                       })()}
                     </td>
 
